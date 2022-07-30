@@ -1,0 +1,33 @@
+export class WebglLinePlotUtils {
+    static absmax(array: any): number;
+    static downsample(array: any, fitCount: any, scalar?: number): any;
+    static upsample(array: any, fitCount: any, scalar?: number): any[];
+    static test(canvasId: any): void;
+    constructor(canvas: any, overlay?: boolean);
+    canvas: any;
+    useOverlay: boolean;
+    plot: WebglPlot;
+    overlay: HTMLCanvasElement;
+    overlayctx: CanvasRenderingContext2D;
+    lines: any[];
+    linesY: any[];
+    linesSPS: any[];
+    axes: any[];
+    dividers: any[];
+    colors: any[];
+    lineSettings: any[];
+    axisscalar: number;
+    nLines: number;
+    nSecGraph: number;
+    nMaxPointsPerSec: number;
+    animationSpeed: number;
+    autoscale(array: any, lineIdx?: number, nLines?: number, centerZero?: boolean): any;
+    deinitPlot(): void;
+    HSLToRGB(h: any, s: any, l: any): number[];
+    initPlot(nLines?: number, linesSPS?: any[], nSecGraph?: number, nMaxPointsPerSec?: number): boolean;
+    updateAllLines: (newAmplitudes?: any[], linesSPS?: any[], autoscale?: boolean, centerZero?: boolean) => void;
+    updateLine: (newAmplitudes?: any[], lineSPS?: number, lineIdx?: number, autoscale?: boolean, centerZero?: boolean) => void;
+    update(): void;
+    animate(): void;
+}
+import { WebglPlot } from "webgl-plot";

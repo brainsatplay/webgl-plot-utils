@@ -1,9 +1,10 @@
 {
     "name": "webgl-plot-utils",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "webgl-plot wrapper for quickly making stacked time series.",
-    "main": "index.js",
-    "type":"module",
+    "main": "dist/index.js",
+    "module": "dist/index.esm.js",
+    "types": "dist/webgl-plot-utils.d.ts",
     "directories": {
       "example": "example"
     },
@@ -23,7 +24,7 @@
     "author": "Joshua Brewster",
     "license": "AGPL-3.0-or-later",
     "dependencies": {
-      "webgl-plot":"^0.6.6"
+      "webgl-plot":"~0.7.0"
     },
     "bugs": {
       "url": "https://github.com/brainsatplay/webgl-plot-utils/issues"
