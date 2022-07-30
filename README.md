@@ -3,7 +3,7 @@
 A quality of life wrapper for webgl-plot library. For creating simple, stacked real time plots.
 
 
-![Capture](./Capture.png)
+![Capture](./Capture.PNG)
 
 
 Usage:
