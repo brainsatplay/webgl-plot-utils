@@ -25,8 +25,9 @@
 
 import {WebglLine, WebglPlot, ColorRGBA} from 'webgl-plot'
 
+//the line amplitudes we pass in are assumed to be a full buffer representing the time frame of the plot, so set the line to zero and fill it
 export class WebglLinePlotUtils {
-    constructor(canvas,overlay=true) {
+    constructor(canvas,overlay=true, overlayCanvas) {
         if(!canvas) throw new Error('Supply a canvas to the webgl plot!')
         this.canvas = canvas;
         
@@ -34,25 +35,28 @@ export class WebglLinePlotUtils {
         this.overlay;
         this.overlayctx;
 
-        this.plot = new WebglPlot(canvas);
+        this.plot = new WebglPlotBundle.WebglPlot(canvas);
 
         if(this.useOverlay) {
-            this.overlay = document.createElement('canvas');
-            this.overlay.style = this.canvas.style;
+            if(overlayCanvas) {
+                this.overlay = overlayCanvas;
+            }
+            else {
+                this.overlay = document.createElement('canvas');
+                this.overlay.style = this.canvas.style;
 
-            // this.overlay.style.width = this.canvas.style.width;
-            // this.overlay.style.height = this.canvas.style.height;
-            this.overlay.width = this.canvas.width;
-            this.overlay.height = this.canvas.height;
-            this.overlay.style.position = 'absolute';
-            this.overlay.style.zIndex = this.canvas.style.zIndex+1;
-            // this.overlay.style.offsetX = this.canvas.style.offsetX;
-            // this.overlay.style.offsetY = this.canvas.style.offsetY;
+                // this.overlay.style.width = this.canvas.style.width;
+                // this.overlay.style.height = this.canvas.style.height;
+                this.overlay.width = this.canvas.width;
+                this.overlay.height = this.canvas.height;
+                this.overlay.style.position = 'absolute';
+                this.overlay.style.zIndex = this.canvas.style.zIndex+1;
+                // this.overlay.style.offsetX = this.canvas.style.offsetX;
+                // this.overlay.style.offsetY = this.canvas.style.offsetY;
+                this.canvas.parentNode.insertAdjacentElement('afterbegin',this.overlay);
+            }
 
             this.overlayctx = this.overlay.getContext('2d');
-
-            this.canvas.parentNode.insertAdjacentElement('afterbegin',this.overlay);
-
         }
         
         this.lines = []; //array of WebglLine objects
@@ -219,7 +223,7 @@ export class WebglLinePlotUtils {
 
             this.lines.push(line);
             if(this.linesY.length < this.lines.length) {
-                this.linesY.push(new Array(numX));
+                this.linesY.push(new Array(numX).fill(0));
             }
 
             
@@ -273,7 +277,7 @@ export class WebglLinePlotUtils {
                 //let absmax = WebglLinePlotUtils.absmax(arr);
                 if(arr.length > this.linesY[i]?.length) {
                     this.linesY[i] = WebglLinePlotUtils.downsample(arr,this.linesY[i].length);
-                } else this.linesY[i] = WebglLinePlotUtils.upsample(arr,this.linesY[i]);
+                } else this.linesY[i] = WebglLinePlotUtils.upsample(arr,this.linesY[i].length); //this.linesY[i] = [...new Array(this.linesY[i].length - arr.length).fill(0),...arr]//
                 sps[i] = Math.ceil(arr.length / this.nSecGraph);
 
                 if(autoscale) {
@@ -336,7 +340,7 @@ export class WebglLinePlotUtils {
         if(newAmplitudes.length !== this.linesY[lineIdx].length) {
             if(newAmplitudes.length > this.linesY[lineIdx].length) {
                 this.linesY[lineIdx] = WebglLinePlotUtils.downsample(newAmplitudes,this.linesY[lineIdx].length); //downsample and autoscale the array to -1,+1
-            } else this.linesY[lineIdx] = WebglLinePlotUtils.upsample(newAmplitudes,this.linesY[lineIdx]); //upsample and autoscale the array to -1,+1
+            } else this.linesY[lineIdx] = WebglLinePlotUtils.upsample(newAmplitudes,this.linesY[lineIdx].length); //upsample and autoscale the array to -1,+1  //this.linesY[i] = [...new Array(this.linesY[i].length - arr.length).fill(0),...arr]//
             if(autoscale) this.linesY[lineIdx] = this.autoscale(newAmplitudes,lineIdx,this.nLines,centerZero); //autoscale the array to -1,+1
             //console.log('resampled', this.linesY[lineIdx]);
         } else {
@@ -354,6 +358,20 @@ export class WebglLinePlotUtils {
             this.overlayctx.fillText(this.lineSettings[lineIdx].ymin.toFixed(2),this.overlay.width-70,this.overlay.height*(lineIdx+0.9)/(this.lines.length))
         }
         //console.log('line updated', lineIdx);
+    }
+
+    //push new entries to end of array and roll over starting entries with a set array length
+    static circularBuffer(arr=[],newEntries=[]) {
+        if(newEntries.length < arr.length)
+            arr.splice(0,arr.length-newEntries.length,...arr.slice(newEntries.length)).splice(arr.length-newEntries.length,arr.length,...newEntries);
+        else if (newEntries.length > arr.length) {
+            arr.splice(0,arr.length,newEntries.slice(newEntries.length-arr.length));
+        }
+        else { 
+            arr.splice(0,arr.length,...newEntries);
+        }
+        
+        return arr;
     }
 
     update() { //draw

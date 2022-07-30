@@ -2,13 +2,14 @@ export class WebglLinePlotUtils {
     static absmax(array: any): number;
     static downsample(array: any, fitCount: any, scalar?: number): any;
     static upsample(array: any, fitCount: any, scalar?: number): any[];
+    static circularBuffer(arr?: any[], newEntries?: any[]): any[];
     static test(canvasId: any): void;
-    constructor(canvas: any, overlay?: boolean);
+    constructor(canvas: any, overlay: boolean, overlayCanvas: any);
     canvas: any;
     useOverlay: boolean;
-    plot: WebglPlot;
-    overlay: HTMLCanvasElement;
-    overlayctx: CanvasRenderingContext2D;
+    plot: any;
+    overlay: any;
+    overlayctx: any;
     lines: any[];
     linesY: any[];
     linesSPS: any[];
@@ -30,4 +31,3 @@ export class WebglLinePlotUtils {
     update(): void;
     animate(): void;
 }
-import { WebglPlot } from "webgl-plot";

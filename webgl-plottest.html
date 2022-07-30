@@ -23,53 +23,56 @@
 
 
         class WebglLinePlotUtils {
-            constructor(canvas,overlay=true) {
-        if(!canvas) throw new Error('Supply a canvas to the webgl plot!')
-        this.canvas = canvas;
-        
-        this.useOverlay = overlay;
-        this.overlay;
-        this.overlayctx;
+            constructor(canvas,overlay=true, overlayCanvas) {
+                if(!canvas) throw new Error('Supply a canvas to the webgl plot!')
+                this.canvas = canvas;
+                
+                this.useOverlay = overlay;
+                this.overlay;
+                this.overlayctx;
 
-        this.plot = new WebglPlotBundle.WebglPlot(canvas);
+                this.plot = new WebglPlotBundle.WebglPlot(canvas);
 
-        if(this.useOverlay) {
-            this.overlay = document.createElement('canvas');
-            this.overlay.style = this.canvas.style;
+                if(this.useOverlay) {
+                    if(overlayCanvas) {
+                        this.overlay = overlayCanvas;
+                    }
+                    else {
+                        this.overlay = document.createElement('canvas');
+                        this.overlay.style = this.canvas.style;
 
-            // this.overlay.style.width = this.canvas.style.width;
-            // this.overlay.style.height = this.canvas.style.height;
-            this.overlay.width = this.canvas.width;
-            this.overlay.height = this.canvas.height;
-            this.overlay.style.position = 'absolute';
-            this.overlay.style.zIndex = this.canvas.style.zIndex+1;
-            // this.overlay.style.offsetX = this.canvas.style.offsetX;
-            // this.overlay.style.offsetY = this.canvas.style.offsetY;
+                        // this.overlay.style.width = this.canvas.style.width;
+                        // this.overlay.style.height = this.canvas.style.height;
+                        this.overlay.width = this.canvas.width;
+                        this.overlay.height = this.canvas.height;
+                        this.overlay.style.position = 'absolute';
+                        this.overlay.style.zIndex = this.canvas.style.zIndex+1;
+                        // this.overlay.style.offsetX = this.canvas.style.offsetX;
+                        // this.overlay.style.offsetY = this.canvas.style.offsetY;
+                        this.canvas.parentNode.insertAdjacentElement('afterbegin',this.overlay);
+                    }
 
-            this.overlayctx = this.overlay.getContext('2d');
+                    this.overlayctx = this.overlay.getContext('2d');
+                }
+                
+                this.lines = []; //array of WebglLine objects
+                this.linesY = []; //raw data arrays
+                this.linesSPS = []; // [];
+                this.axes = [];
+                this.dividers = [];
+                this.colors = [];
 
-            this.canvas.parentNode.insertAdjacentElement('afterbegin',this.overlay);
+                this.lineSettings = [];
 
-        }
-        
-        this.lines = []; //array of WebglLine objects
-        this.linesY = []; //raw data arrays
-        this.linesSPS = []; // [];
-        this.axes = [];
-        this.dividers = [];
-        this.colors = [];
+                this.axisscalar = 1; // chart axis scalar
+                this.nLines = 0;
 
-        this.lineSettings = [];
+                this.nSecGraph = 10; //default
+                this.nMaxPointsPerSec = 512;
 
-        this.axisscalar = 1; // chart axis scalar
-        this.nLines = 0;
+                this.animationSpeed = 6.9; //ms
 
-        this.nSecGraph = 10; //default
-        this.nMaxPointsPerSec = 512;
-
-        this.animationSpeed = 6.9; //ms
-
-    }
+            }
 
     //autoscale array to -1 and 1
     autoscale(array,lineIdx=0,nLines=1,centerZero=false) {
