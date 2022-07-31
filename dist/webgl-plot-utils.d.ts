@@ -51,7 +51,7 @@ export declare class WebglLinePlotUtil {
             autoscale?: boolean;
             interpolate?: boolean;
         };
-    }, draw?: boolean): void;
+    }, draw?: boolean): boolean;
     updateLine(line: WebglLine | WebglThickLine, values: number[], interpolate?: boolean, autoscale?: boolean, autoscalePosition?: number, nLines?: number, centerZero?: boolean): boolean;
     static autoscale(array: any, lineIdx?: number, nLines?: number, centerZero?: boolean): any;
     static absmax(array: any): number;
