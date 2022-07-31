@@ -40,7 +40,7 @@ type WebglLinePlotProps = {
     lines:{
         [key:string]:WebglLineProps
     },
-    interpolate?:boolean, //up or downsample data provided to update arrays if input array sizes mismatch their settings, else we will use the end of the array for the slice (assuming you're pushing to an array and visualizing the incoming data). More performant not to but easier for laziness
+    interpolate?:boolean, //up or downsample data provided to update arrays if update sizes mismatch their initial settings, else we will use the end of the array for the slice (assuming you're pushing to an array and visualizing the incoming data). More performant not to but easier for laziness
     dividerColor?:[number,number,number,number]|ColorRGBA, //default gray
     [key:string]:any
 }
