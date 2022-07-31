@@ -61,15 +61,15 @@ let settings = {
     overlay:true,
     lines:{
         'a': {
-            values:new Array(10000).fill(Date.now()).map((v,i) => Math.sine(i*0.001+v))
+            values:new Array(10000).fill(Date.now()).map((v,i) => Math.sine(i*0.001+v)),
             color:[0,255,0,1]
         },
         'b': {
-            values:new Array(10000).fill(Date.now()+2).map((v,i) => Math.cos(i*0.001+v))
+            values:new Array(10000).fill(Date.now()+2).map((v,i) => Math.cos(i*0.001+v)),
             color:[255,0,0,1]
         },
         'c': {
-            values:new Array(10000).fill(Date.now()+3).map((v,i) => Math.cos(i*0.001)*Math.sine(i*0.001+v))
+            values:new Array(10000).fill(Date.now()+3).map((v,i) => Math.cos(i*0.001)*Math.sine(i*0.001+v)),
             color:[0,0,255,1]
         }
     };
@@ -81,15 +81,12 @@ let anim = () => {
     let lines = {
         'a': {
             values:new Array(10000).fill(Date.now()).map((v,i) => Math.sine(i*0.001+v))
-            color:[0,255,0,1]
         },
         'b': {
             values:new Array(10000).fill(Date.now()+2).map((v,i) => Math.cos(i*0.001+v))
-            color:[255,0,0,1]
         },
         'c': {
             values:new Array(10000).fill(Date.now()+3).map((v,i) => Math.cos(i*0.001)*Math.sine(i*0.001+v))
-            color:[0,0,255,1]
         }
     };
 
