@@ -53,25 +53,25 @@ export class WebglLinePlotUtil {
         if(!plot)
             plot = new WebglPlot(settings.canvas,settings.webglOptions);
 
-        let info:any = {
-            plot,
-            settings
-        };
 
         if(!settings._id) {
             settings._id = `plot${Math.floor(Math.random()*1000000000000000)}`;
+            
+            let info:any = {
+                plot,
+                settings
+            };
             this.plots[settings._id] = info;
         }
         
 
         if(settings.overlay) { //be sure to transfer this on workers
-            if(typeof settings.overlay === 'object') settings.overlay = settings.overlay;
-            else {
+            if(typeof settings.overlay !== 'object') {
                 settings.overlay = document.createElement('canvas');
                 settings.overlay.style.position = 'absolute';
                 settings.overlay.width = settings.canvas.width;
                 settings.overlay.height = settings.canvas.height;
-                settings.canvas.appendChild(info.overlay);
+                settings.canvas.appendChild(settings.overlay);
             }
             settings.overlayCtx = settings.overlay.getContext('2d');
         }
@@ -171,7 +171,7 @@ export class WebglLinePlotUtil {
             i++;
         }
 
-        return info;
+        return this.plots[settings._id];
 
     }
 
@@ -180,6 +180,14 @@ export class WebglLinePlotUtil {
         info.plot.removeAllLines();
 
         return true;
+    }
+
+    //apply new settings e.g. color, width, nPoints, etc.
+    reinitPlot(info:WebglLinePlotInfo, settings:WebglLinePlotProps) {
+        info.plot.clear();
+        info.plot.removeAllLines();
+
+        return this.initPlot(settings,info.plot);
     }
 
     //pass the info object and the lines you want to update
