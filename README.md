@@ -69,11 +69,13 @@ let settings = {
         },
         'b': {
             values:new Array(10000).fill(Date.now()+2).map((v,i) => Math.cos(i*0.001+v)),
-            color:[255,0,0,1]
+            color:[255,0,0,1],
+            width:4
         },
         'c': {
             values:new Array(10000).fill(Date.now()+3).map((v,i) => Math.cos(i*0.001)*Math.sine(i*0.001+v)),
-            color:[0,0,255,1]
+            color:[0,0,255,1],
+            width:8
         }
     };
 }
@@ -90,7 +92,7 @@ let anim = () => {
         },
         'c': {
             values:new Array(10000).fill(Date.now()+3).map((v,i) => Math.cos(i*0.001)*Math.sine(i*0.001+v))
-        }
+        } //or set each key as arrays to avoid an additional object being created 
     };
 
     plotter.update(plot,lines);

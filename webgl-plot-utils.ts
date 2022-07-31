@@ -204,7 +204,7 @@ export class WebglLinePlotUtil {
                 position?:number,
                 autoscale?:boolean,
                 interpolate?:boolean
-            }
+            }|number[]
         }, 
         draw:boolean=true
         ) {
@@ -214,7 +214,8 @@ export class WebglLinePlotUtil {
             if(plotInfo.settings.lines[line]) {
                 let s = plotInfo.settings.lines[line] as any;
                 let oldvalues = s.values;
-                Object.assign(s,lines[line]);
+                if(Array.isArray(lines[line])) s.values = lines[line];
+                else Object.assign(s,lines[line]);
                 if(s.values) {
                     if(plotInfo.settings.overlay) {
                         let max = Math.max(...s.values);

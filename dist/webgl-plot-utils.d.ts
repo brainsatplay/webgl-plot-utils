@@ -51,7 +51,7 @@ export declare class WebglLinePlotUtil {
             position?: number;
             autoscale?: boolean;
             interpolate?: boolean;
-        };
+        } | number[];
     }, draw?: boolean): boolean;
     updateLine(line: WebglLine | WebglThickLine, values: number[], interpolate?: boolean, autoscale?: boolean, autoscalePosition?: number, nLines?: number, centerZero?: boolean): boolean;
     static autoscale(array: any, lineIdx?: number, nLines?: number, centerZero?: boolean): any;
