@@ -42,8 +42,8 @@ export declare class WebglLinePlotUtil {
         [key: string]: WebglLinePlotInfo;
     };
     initPlot(settings: WebglLinePlotProps, plot?: WebglPlot): WebglLinePlotInfo;
-    deinitPlot(info: WebglLinePlotInfo): boolean;
-    reinitPlot(info: WebglLinePlotInfo, settings: WebglLinePlotProps): WebglLinePlotInfo;
+    deinitPlot(info: WebglLinePlotInfo | string): boolean;
+    reinitPlot(info: WebglLinePlotInfo | string, settings: WebglLinePlotProps): WebglLinePlotInfo;
     update(plotInfo: WebglLinePlotInfo | string, lines?: {
         [key: string]: {
             values: number[];

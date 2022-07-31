@@ -52,7 +52,7 @@ export class WebglLinePlotUtil {
 
         if(!plot)
             plot = new WebglPlot(settings.canvas,settings.webglOptions);
-
+        
 
         if(!settings._id) {
             settings._id = `plot${Math.floor(Math.random()*1000000000000000)}`;
@@ -171,11 +171,14 @@ export class WebglLinePlotUtil {
             i++;
         }
 
+        plot.update();
+
         return this.plots[settings._id];
 
     }
 
-    deinitPlot(info:WebglLinePlotInfo) {
+    deinitPlot(info:WebglLinePlotInfo|string) {
+        if(typeof info === 'string') info = this.plots[info];
         info.plot.clear();
         info.plot.removeAllLines();
 
@@ -183,7 +186,8 @@ export class WebglLinePlotUtil {
     }
 
     //apply new settings e.g. color, width, nPoints, etc.
-    reinitPlot(info:WebglLinePlotInfo, settings:WebglLinePlotProps) {
+    reinitPlot(info:WebglLinePlotInfo|string, settings:WebglLinePlotProps) {
+        if(typeof info === 'string') info = this.plots[info];
         info.plot.clear();
         info.plot.removeAllLines();
 
@@ -204,10 +208,11 @@ export class WebglLinePlotUtil {
         draw:boolean=true
         ) {
         if(typeof plotInfo === 'string') plotInfo = this.plots[plotInfo];
-        if(!plotInfo) return;
+        if(!plotInfo) return false;
         if(lines) for(const line in lines) {
             if(plotInfo.settings.lines[line]) {
                 let s = plotInfo.settings.lines[line] as any;
+                let oldvalues = s.values;
                 Object.assign(s,lines[line]);
                 if(s.values) {
                     if(plotInfo.settings.overlay) {
@@ -225,7 +230,7 @@ export class WebglLinePlotUtil {
                             }
                         } else {
                             if(s.values.length > s.points) s.values = s.values.slice(s.values.length-s.points);
-                            else s.values = [...new Array(s.points-s.values.length).fill(0), ...s.values];
+                            else s.values = [...oldvalues.slice(s.points-s.values.length), ...s.values];
                         }
                     }
                     if(s.autoscale) {
@@ -251,6 +256,7 @@ export class WebglLinePlotUtil {
         }
 
         if(draw) plotInfo.plot.update(); //redraw
+        return true;
     }
     
     //provides a little more situational control over the plot
@@ -270,7 +276,10 @@ export class WebglLinePlotUtil {
                 } else if (line.numPoints < values.length) {
                     values = WebglLinePlotUtil.upsample(values, line.numPoints);
                 }
-            } else values = values.slice(values.length-line.numPoints);
+            } else {
+                if(values.length > line.numPoints) values = values.slice(values.length-line.numPoints);
+                else values = [...new Array(line.numPoints-values.length).fill(0), ...values];
+            } 
         }
         if(autoscale) {
             values = WebglLinePlotUtil.autoscale(values, autoscalePosition, nLines, centerZero);
