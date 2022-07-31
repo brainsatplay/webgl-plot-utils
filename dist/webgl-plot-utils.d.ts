@@ -9,6 +9,7 @@ export declare type WebglLineProps = {
     xColor?: [number, number, number, number] | ColorRGBA;
     width?: number;
     interpolate?: boolean;
+    useOverlay?: boolean;
     [key: string]: any;
 } & ({
     nPoints: number;

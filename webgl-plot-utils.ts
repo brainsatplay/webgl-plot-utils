@@ -11,6 +11,7 @@ export type WebglLineProps = {
     xColor?:[number,number,number,number]|ColorRGBA, //default gray and transparent
     width?:number, //use thick triangle strip lines instead, 6x slower!!
     interpolate?:boolean, //we can up or downsample data provided to update arrays, else we will use the end of the array for the slice (assuming you're pushing to an array and visualizing the incoming data)
+    useOverlay?:boolean, //specify if you want this line to print, set false for overlapping lines to prevent printing on top of each other (for now)
     [key:string]:any
 } & (
     { //define a fixed number of points
@@ -233,7 +234,7 @@ export class WebglLinePlotUtil {
                             }
                         } else {
                             if(s.values.length > s.points) s.values = s.values.slice(s.values.length-s.points);
-                            else s.values = [...oldvalues.slice(s.points-s.values.length), ...s.values];
+                            else s.values = [...oldvalues.slice(s.points-s.values.length), ...s.values]; //circular buffer
                         }
                     }
                     s.values.forEach((y,i) => s.line.setY(i,y));
@@ -249,9 +250,11 @@ export class WebglLinePlotUtil {
             ctx.fillStyle = 'white';
             for(const line in plotInfo.settings.lines) {
                 let s = plotInfo.settings.lines[line];
-                ctx.fillText(line, 20,canvas.height*(s.position as number + 0.1)/plotInfo.settings.nLines);
-                ctx.fillText(s.ymax, canvas.width - 70,canvas.height*(s.position as number + 0.1)/plotInfo.settings.nLines);
-                ctx.fillText(s.ymin, canvas.width - 70,canvas.height*(s.position as number + 0.9)/plotInfo.settings.nLines);
+                if(s.useOverlay || !('useOverlay' in s)) {
+                    ctx.fillText(line, 20,canvas.height*(s.position as number + 0.1)/plotInfo.settings.nLines);
+                    ctx.fillText(s.ymax, canvas.width - 70,canvas.height*(s.position as number + 0.1)/plotInfo.settings.nLines);
+                    ctx.fillText(s.ymin, canvas.width - 70,canvas.height*(s.position as number + 0.9)/plotInfo.settings.nLines);
+                }
             }
         }
 
