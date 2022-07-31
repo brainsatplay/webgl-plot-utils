@@ -66,7 +66,7 @@ export declare class WebglLinePlotUtil {
             values: number[] | number;
             [key: string]: any;
         };
-    } | string | number[] | number, key?: string): {
+    } | string | ((number | number[])[]) | number, key?: string): {
         [key: string]: number[] | {
             [key: string]: any;
             values: number[];

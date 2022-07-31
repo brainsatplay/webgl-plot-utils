@@ -429,13 +429,20 @@ export class WebglLinePlotUtil {
 
     //e.g. mimic arduino serial plotter data, make sure we return an object of key:array pairs
     static formatDataForCharts(
-        data:{[key:string]:number[]|number|{values:number[]|number,[key:string]:any}}|string|number[]|number, 
+        data:{[key:string]:number[]|number|{values:number[]|number,[key:string]:any}}|string|((number|number[])[])|number, 
         key?:string //if passing a single value
     ) {
         //take incoming data formats and return them in the format that our charting library likes so we can blindly pass stuff in
         if (Array.isArray(data)) {
-            if(key) data = {[key]:data};
-            else data = {0:data};
+            if(Array.isArray(data[0])) {
+                let d = {};
+                data.forEach((arr,i) => {
+                    d[i] = arr;
+                });
+                data = d;
+            }
+            else if(key) data = {[key]:data} as any;
+            else data = {0:data} as any;
         } else if(typeof data === 'object') { //swap incoming key:value pairs into our charting library format
             for(const key in data) {
                 if(typeof data[key] === 'number') data[key] = [data[key] as number];
