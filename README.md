@@ -16,6 +16,7 @@ type WebglLineProps = {
     xAxis:boolean, //draw an xaxis, default true
     xColor?:[number,number,number,number]|ColorRGBA, //default gray and transparent
     width?:number, //use thick triangle strip lines instead, 6x slower!!
+    interpolate?:boolean, //we can up or downsample data provided to update arrays, else we will use the end of the array for the slice (assuming you're pushing to an array and visualizing the incoming data)
     [key:string]:any
 } & (
     { //define a fixed number of points

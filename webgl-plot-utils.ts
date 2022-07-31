@@ -183,13 +183,24 @@ export class WebglLinePlotUtil {
     }
 
     //pass the info object and the lines you want to update
-    update(plotInfo:WebglLinePlotInfo|string, lines?:{[key:string]:{values:number[],position?:number,autoscale?:boolean,interpolate?:boolean}}, draw:boolean=true) {
+    update(
+        plotInfo:WebglLinePlotInfo|string, 
+        lines?:{
+            [key:string]:{
+                values:number[],
+                position?:number,
+                autoscale?:boolean,
+                interpolate?:boolean
+            }
+        }, 
+        draw:boolean=true
+        ) {
         if(typeof plotInfo === 'string') plotInfo = this.plots[plotInfo];
         if(!plotInfo) return;
         if(lines) for(const line in lines) {
             if(plotInfo.settings.lines[line]) {
                 let s = plotInfo.settings.lines[line] as any;
-                Object.assign(s,lines);
+                Object.assign(s,lines[line]);
                 if(s.values) {
                     if(plotInfo.settings.overlay) {
                         let max = Math.max(...s.values);
