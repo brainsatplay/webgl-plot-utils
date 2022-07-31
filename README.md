@@ -1,62 +1,100 @@
 # webgl-plot-utils
 
 A quality of life wrapper for webgl-plot library. For creating simple, stacked real time plots.
-
+Incl thicc (triangle strip) lines, autoscaling for stacking, auto-interpolation or auto-slicing, text overlay support, 
 
 ![Capture](./Capture.PNG)
 
 
-Usage:
+```ts
+export type WebglLineProps = {
+    values?:number[],
+    color?:[number,number,number,number]|ColorRGBA,  
+    position?:number, //stack position? default is the order you define the lines in this object or you can have them overlap
+    autoscale?:boolean, //autoscale the data to -1 and 1 and stack, default true so you can just pass whatever
+    centerZero?:boolean, //center the line at zero (if autoscaling), i.e. the positive and negative axis get the same amount of space, default false
+    xAxis:boolean, //draw an xaxis, default true
+    xColor?:[number,number,number,number]|ColorRGBA, //default gray and transparent
+    width?:number, //use thick triangle strip lines instead, 6x slower!!
+    [key:string]:any
+} & (
+    { //define a fixed number of points
+        nPoints:number
+    }|{ //or define by number of seconds + samplerate
+        nSec:number, 
+        sps:number
+    })
 
-```js
+export type WebglLinePlotProps = {
+    canvas:HTMLCanvasElement,
+    webglOptions?:{
+        antialias?:boolean,
+        transparent?:boolean,
+        desynchronized?:boolean,
+        powerPerformance?:'default'|'high-performance'|'low-power',
+        preserveDrawing?:boolean,
+        debug?:boolean
+    },
+    overlay?:HTMLCanvasElement|boolean, //automatically print the max and min values of the stacked lines
+    lines:{
+        [key:string]:WebglLineProps
+    },
+    interpolate?:boolean, //we can up or downsample data provided to update arrays, else we will use the end of the array for the slice (assuming you're pushing to an array and visualizing the incoming data)
+    dividerColor?:[number,number,number,number]|ColorRGBA, //default gray
+    [key:string]:any
+}
 
-    const canvas = document.createElement('canvas');
-    document.body.appendChild(canvas);
+let plotter = new WebglLinePlotUtil()
 
-    const devicePixelRatio = window.devicePixelRatio || 1;
-    canvas.width = canvas.clientWidth * devicePixelRatio;
-    canvas.height = canvas.clientHeight * devicePixelRatio;
+let canvas = document.createElement('canvas')
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+canvas.style.width = window.innerWidth;
+canvas.style.height = window.innerHeight;
 
+document.appendChild(canvas);
 
-    let sps = 512;
-    let sps2 = 256;
-    let nSec = 3;
-    let nPointsRenderedPerSec = 512;
-
-    const freq = 1;
-    const amp = 0.5;
-    const noise = 0.5;
-
-    let line = new Array(sps*nSec);
-    let line2 = new Array(sps2*nSec);
-
-
-    let plotutil = new WebglLinePlotUtils(canvas);
-    plotutil.initPlot(2,[sps,sps2],nSec,nPointsRenderedPerSec);
-
-    function update(line=[],sps=512,sec=10) {
-        let len = sps*sec;
-        let tincr = sec/len;
-        let time = 0;
-        for (let i = 0; i < sps*sec; i++) {
-            const ySin = 1+Math.sin(Math.PI * time * freq * Math.PI * 2 + (performance.now()*0.001));
-            const yNoise = Math.random() - 0.5;
-            line[i] = ySin * amp + yNoise * noise;
-            time += tincr;
+let settings = {
+    canvas,
+    overlay:true,
+    lines:{
+        'a': {
+            values:new Array(10000).fill(Date.now()).map((v,i) => Math.sine(i*0.001+v))
+            color:[0,255,0,1]
+        },
+        'b': {
+            values:new Array(10000).fill(Date.now()+2).map((v,i) => Math.cos(i*0.001+v))
+            color:[255,0,0,1]
+        },
+        'c': {
+            values:new Array(10000).fill(Date.now()+3).map((v,i) => Math.cos(i*0.001)*Math.sine(i*0.001+v))
+            color:[0,0,255,1]
         }
-    }
+    };
+}
 
-    let  newFrame = () => {
-        update(line,sps,nSec);
-        update(line2,sps2,nSec);
-        //console.log(line);
-        plotutil.updateAllLines([line,line2,line,line2,line,line2],[sps,sps2,sps,sps2,sps,sps2],true,false);
-        plotutil.update();
+let plot = plotter.initPlot(settings);
 
-        requestAnimationFrame(newFrame);
-    }
-    requestAnimationFrame(newFrame);
+let anim = () => {
+    let lines = {
+        'a': {
+            values:new Array(10000).fill(Date.now()).map((v,i) => Math.sine(i*0.001+v))
+            color:[0,255,0,1]
+        },
+        'b': {
+            values:new Array(10000).fill(Date.now()+2).map((v,i) => Math.cos(i*0.001+v))
+            color:[255,0,0,1]
+        },
+        'c': {
+            values:new Array(10000).fill(Date.now()+3).map((v,i) => Math.cos(i*0.001)*Math.sine(i*0.001+v))
+            color:[0,0,255,1]
+        }
+    };
 
-            
+    plotter.update(plot,lines);
 
+    requestAnimationFrame(anim);
+}
+
+anim();
 ```
