@@ -361,6 +361,15 @@ export class WebglLinePlotUtil {
 		return newData;
 	};
 
+    static interpolate(array:number[], fitCount:number, scalar=1) {
+        if(array.length > fitCount) {
+            return WebglLinePlotUtil.downsample(array, fitCount, scalar);
+        } else if(array.length < fitCount) {
+            return WebglLinePlotUtil.upsample(array, fitCount, scalar);
+        }
+        return array;
+    }
+
     static HSLToRGB(h,s,l):[number,number,number] {
         // Must be fractions of 1
         s /= 100;
@@ -413,6 +422,65 @@ export class WebglLinePlotUtil {
         }
         
         return arr;
+    }
+
+    //e.g. mimic arduino serial plotter data, make sure we return an object of key:array pairs
+    static formatDataForCharts(
+        data:{[key:string]:number[]|number}|string|number[]|number, 
+        key?:string //if passing a single value
+    ) {
+        //take incoming data formats and return them in the format that our charting library likes so we can blindly pass stuff in
+        if(typeof data === 'object') { //swap incoming key:value pairs into our charting library format
+            for(const key in data) {
+                if(typeof data[key] === 'number') data[key] = [data[key]];
+            }
+        }
+        else if (typeof data === 'string') { //let's parse different string formats 
+            let split;
+            if(data.includes('\t')) {
+                split = data.split('\t');
+            } else if (data.includes(',')) {
+                split = data.split(',');
+            } 
+            data = {};
+            split.forEach((val,i) => {
+                if(val.includes(':')) {
+                    let [key,v] = val.split(':');
+                    data[key] = [parseFloat(v)];
+                } else {
+                    data[i] = [parseFloat(val)];
+                }
+            });
+    
+        } else if (Array.isArray(data)) {
+            if(key) data = {[key]:data};
+            else data = {0:data};
+        } else if (typeof data === 'number')
+            if(key) data = {[key]:[data]};    
+            else data = {0:[data]};
+    
+        return data;
+    }
+
+    //pad an array based on a time interval between sample sets, averaging slope
+    static padTime(
+        data:number[], //new data, assumed to be sequential between a gap
+        lastValue:number, //the last data point before the gap
+        time:number,    //interval that's passed to determine slope between samples
+        targetFit:number //e.g. time(s) * sps i.e. if our chart expects a certain number of points per second to stay consistent
+    ) {
+        let slopeIncr = ((data[0]-lastValue) / time) / targetFit;
+        let padded = [...new Array(targetFit - data.length).map((_,i) => lastValue + slopeIncr*(i+1)),...data];
+
+        return padded;
+    }
+
+    static interpolateForTime(
+        data:number[], //new data, assumed to be evenly spread over a time interval
+        time:number, //the time interval passed (s)
+        targetSPS:number //number of points per second expected by graph
+    ) {
+        return WebglLinePlotUtil.interpolate(data, Math.ceil(targetSPS*time));
     }
 
 }
