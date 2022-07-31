@@ -210,35 +210,37 @@ export class WebglLinePlotUtil {
         ) {
         if(typeof plotInfo === 'string') plotInfo = this.plots[plotInfo];
         if(!plotInfo) return false;
-        if(lines) for(const line in lines) {
-            if(plotInfo.settings.lines[line]) {
-                let s = plotInfo.settings.lines[line] as any;
-                let oldvalues = s.values;
-                if(Array.isArray(lines[line])) s.values = lines[line];
-                else Object.assign(s,lines[line]);
-                if(s.values) {
-                    if(plotInfo.settings.overlay) {
-                        let max = Math.max(...s.values);
-                        let min = Math.min(...s.values);
-                        s.ymin = min;
-                        s.ymax = max;
-                    }
-                    if(s.autoscale) {
-                        s.values = WebglLinePlotUtil.autoscale(s.values, s.position, plotInfo.settings.nLines, s.centerZero);
-                    }
-                    if(s.values.length !== s.points) {
-                        if(s.interpolate) {
-                            if(s.values.length > s.points) {
-                                s.values = WebglLinePlotUtil.downsample(s.values, s.points);
-                            } else if (s.values.length < s.points) {
-                                s.values = WebglLinePlotUtil.upsample(s.values, s.points);
-                            }
-                        } else {
-                            if(s.values.length > s.points) s.values = s.values.slice(s.values.length-s.points);
-                            else s.values = [...oldvalues.slice(s.points-s.values.length), ...s.values]; //circular buffer
+        if(lines) {
+            for(const line in lines) {
+                if(plotInfo.settings.lines[line]) {
+                    let s = plotInfo.settings.lines[line] as any;
+                    let oldvalues = s.values;
+                    if(Array.isArray(lines[line])) s.values = lines[line];
+                    else Object.assign(s,lines[line]);
+                    if(s.values) {
+                        if(plotInfo.settings.overlay) {
+                            let max = Math.max(...s.values);
+                            let min = Math.min(...s.values);
+                            s.ymin = min;
+                            s.ymax = max;
                         }
+                        if(s.autoscale) {
+                            s.values = WebglLinePlotUtil.autoscale(s.values, s.position, plotInfo.settings.nLines, s.centerZero);
+                        }
+                        if(s.values.length !== s.points) {
+                            if(s.interpolate) {
+                                if(s.values.length > s.points) {
+                                    s.values = WebglLinePlotUtil.downsample(s.values, s.points);
+                                } else if (s.values.length < s.points) {
+                                    s.values = WebglLinePlotUtil.upsample(s.values, s.points);
+                                }
+                            } else {
+                                if(s.values.length > s.points) s.values = s.values.slice(s.values.length-s.points);
+                                else s.values = [...oldvalues.slice(s.points-s.values.length), ...s.values]; //circular buffer
+                            }
+                        }
+                        s.values.forEach((y,i) => s.line.setY(i,y));
                     }
-                    s.values.forEach((y,i) => s.line.setY(i,y));
                 }
             }
         }
@@ -427,13 +429,20 @@ export class WebglLinePlotUtil {
 
     //e.g. mimic arduino serial plotter data, make sure we return an object of key:array pairs
     static formatDataForCharts(
-        data:{[key:string]:number[]|number}|string|number[]|number, 
+        data:{[key:string]:number[]|number|{values:number[]|number,[key:string]:any}}|string|number[]|number, 
         key?:string //if passing a single value
     ) {
         //take incoming data formats and return them in the format that our charting library likes so we can blindly pass stuff in
-        if(typeof data === 'object') { //swap incoming key:value pairs into our charting library format
+        if (Array.isArray(data)) {
+            if(key) data = {[key]:data};
+            else data = {0:data};
+        } else if(typeof data === 'object') { //swap incoming key:value pairs into our charting library format
             for(const key in data) {
-                if(typeof data[key] === 'number') data[key] = [data[key]];
+                if(typeof data[key] === 'number') data[key] = [data[key] as number];
+                else if ((data[key] as any)?.values) {
+                    if(typeof (data[key] as any).values === 'number') 
+                    (data[key] as any).values = [(data[key] as any).values];
+                }
             }
         }
         else if (typeof data === 'string') { //let's parse different string formats 
@@ -453,14 +462,12 @@ export class WebglLinePlotUtil {
                 }
             });
     
-        } else if (Array.isArray(data)) {
-            if(key) data = {[key]:data};
-            else data = {0:data};
-        } else if (typeof data === 'number')
+        } else if (typeof data === 'number') {
             if(key) data = {[key]:[data]};    
             else data = {0:[data]};
+        }
     
-        return data;
+        return data as {[key:string]:number[]|{values:number[],[key:string]:any}};
     }
 
     //pad an array based on a time interval between sample sets, averaging slope

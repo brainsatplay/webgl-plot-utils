@@ -62,9 +62,15 @@ export declare class WebglLinePlotUtil {
     static HSLToRGB(h: any, s: any, l: any): [number, number, number];
     static circularBuffer(arr: any[], newEntries: any[]): any[];
     static formatDataForCharts(data: {
-        [key: string]: number[] | number;
-    } | string | number[] | number, key?: string): number[] | {
-        [key: string]: number | number[];
+        [key: string]: number[] | number | {
+            values: number[] | number;
+            [key: string]: any;
+        };
+    } | string | number[] | number, key?: string): {
+        [key: string]: number[] | {
+            [key: string]: any;
+            values: number[];
+        };
     };
     static padTime(data: number[], //new data, assumed to be sequential between a gap
     lastValue: number, //the last data point before the gap
