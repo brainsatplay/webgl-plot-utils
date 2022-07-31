@@ -1,7 +1,9 @@
 # webgl-plot-utils
 
 A quality of life wrapper for webgl-plot library. For creating simple, stacked real time plots.
-Incl thicc (triangle strip) lines, autoscaling for stacking, auto-interpolation or auto-slicing, text overlay support, 
+Incl thicc (triangle strip) lines, autoscaling for stacking, auto-interpolation or auto-slicing, text overlay support.
+
+13kb dist
 
 ![Capture](./Capture.PNG)
 
