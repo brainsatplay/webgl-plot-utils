@@ -10,8 +10,7 @@ export type WebglLineProps = {
     xAxis:boolean, //draw an xaxis, default true
     xColor?:[number,number,number,number]|ColorRGBA, //default gray and transparent
     width?:number, //use thick triangle strip lines instead, 6x slower!!
-    interpolate?:boolean, //we can up or downsample data provided to update arrays, else we will use the end of the array for the slice (assuming you're pushing to an array and visualizing the incoming data)
-    [key:string]:any
+    interpolate?:boolean, //we can up or downsample data provided to update arrays, else we will splice the new values onto the end of the old values and roll over the buffer
 } & (
     { //define a fixed number of points
         nPoints:number
@@ -250,8 +249,8 @@ export class WebglLinePlotUtil {
             for(const line in plotInfo.settings.lines) {
                 let s = plotInfo.settings.lines[line];
                 ctx.fillText(line, 20,canvas.height*(s.position as number + 0.1)/plotInfo.settings.nLines);
-                ctx.fillText(s.ymax, canvas.width - 70,canvas.height*(s.position as number + 0.1)/plotInfo.settings.nLines);
-                ctx.fillText(s.ymin, canvas.width - 70,canvas.height*(s.position as number + 0.9)/plotInfo.settings.nLines);
+                ctx.fillText((s as any).ymax, canvas.width - 70,canvas.height*(s.position as number + 0.1)/plotInfo.settings.nLines);
+                ctx.fillText((s as any).ymin, canvas.width - 70,canvas.height*(s.position as number + 0.9)/plotInfo.settings.nLines);
             }
         }
 
