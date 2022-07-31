@@ -39,7 +39,7 @@ export declare type WebglLinePlotInfo = {
         overlayCtx?: CanvasRenderingContext2D;
     };
 };
-export declare class WebGLLinePlotUtil {
+export declare class WebglLinePlotUtil {
     plots: {
         [key: string]: WebglLinePlotInfo;
     };

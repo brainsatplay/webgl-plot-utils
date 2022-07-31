@@ -43,7 +43,7 @@ export type WebglLinePlotInfo = {
     settings:WebglLinePlotProps & { overlayCtx?:CanvasRenderingContext2D },
 }
 
-export class WebGLLinePlotUtil {
+export class WebglLinePlotUtil {
 
     plots:{[key:string]:WebglLinePlotInfo} = {};
 
@@ -87,7 +87,7 @@ export class WebGLLinePlotUtil {
                     s.color = new ColorRGBA(...s.color as [number,number,number,number]);
                 }
             } else {
-                let rgb = WebGLLinePlotUtil.HSLToRGB(360*(i/nLines)%360,100,50);
+                let rgb = WebglLinePlotUtil.HSLToRGB(360*(i/nLines)%360,100,50);
                 s.color = new ColorRGBA(...rgb, 1);
             }
 
@@ -112,9 +112,9 @@ export class WebGLLinePlotUtil {
                 if(s.values.length !== points) {
                     if(s.interpolate) {
                         if(s.values.length > points) {
-                            s.values = WebGLLinePlotUtil.downsample(s.values, points);
+                            s.values = WebglLinePlotUtil.downsample(s.values, points);
                         } else if (s.values.length < points) {
-                            s.values = WebGLLinePlotUtil.upsample(s.values, points);
+                            s.values = WebglLinePlotUtil.upsample(s.values, points);
                         }
                     } else s.values = s.values.slice(s.values.length-points);
                 }
@@ -122,7 +122,7 @@ export class WebGLLinePlotUtil {
             if(!('autoscale' in s)) s.autoscale = true; 
             if(!s.position) s.position = i;
             if(s.autoscale) {
-                s.values = WebGLLinePlotUtil.autoscale(s.values, s.position ? s.position : i, nLines, s.centerZero);
+                s.values = WebglLinePlotUtil.autoscale(s.values, s.position ? s.position : i, nLines, s.centerZero);
             }
 
             s.values.forEach((y,i) => s.line.setY(i,y));
@@ -191,14 +191,14 @@ export class WebGLLinePlotUtil {
                     if(s.values.length !== s.points) {
                         if(s.interpolate) {
                             if(s.values.length > s.points) {
-                                s.values = WebGLLinePlotUtil.downsample(s.values, s.points);
+                                s.values = WebglLinePlotUtil.downsample(s.values, s.points);
                             } else if (s.values.length < s.points) {
-                                s.values = WebGLLinePlotUtil.upsample(s.values, s.points);
+                                s.values = WebglLinePlotUtil.upsample(s.values, s.points);
                             }
                         } else s.values = s.values.slice(s.values.length-s.points);
                     }
                     if(s.autoscale) {
-                        s.values = WebGLLinePlotUtil.autoscale(s.values, s.position, plotInfo.settings.nLines, s.centerZero);
+                        s.values = WebglLinePlotUtil.autoscale(s.values, s.position, plotInfo.settings.nLines, s.centerZero);
                     }
                     s.values.forEach((y,i) => s.line.setY(i,y));
                 }
@@ -235,14 +235,14 @@ export class WebGLLinePlotUtil {
         if(line.numPoints !== values.length) {
             if(interpolate) {
                 if(line.numPoints > values.length) {
-                    values = WebGLLinePlotUtil.downsample(values, line.numPoints);
+                    values = WebglLinePlotUtil.downsample(values, line.numPoints);
                 } else if (line.numPoints < values.length) {
-                    values = WebGLLinePlotUtil.upsample(values, line.numPoints);
+                    values = WebglLinePlotUtil.upsample(values, line.numPoints);
                 }
             } else values = values.slice(values.length-line.numPoints);
         }
         if(autoscale) {
-            values = WebGLLinePlotUtil.autoscale(values, autoscalePosition, nLines, centerZero);
+            values = WebglLinePlotUtil.autoscale(values, autoscalePosition, nLines, centerZero);
         }
         values.forEach((y,i) => line.setY(i,y));
 
