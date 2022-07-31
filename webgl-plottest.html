@@ -273,7 +273,7 @@
                 //let absmax = WebglLinePlotUtils.absmax(arr);
                 if(arr.length > this.linesY[i]?.length) {
                     this.linesY[i] = WebglLinePlotUtils.downsample(arr,this.linesY[i].length);
-                } else this.linesY[i] = WebglLinePlotUtils.upsample(arr,this.linesY[i]);
+                } else this.linesY[i] = WebglLinePlotUtils.upsample(arr,this.linesY[i].length);
                 sps[i] = Math.ceil(arr.length / this.nSecGraph);
 
                 if(autoscale) {

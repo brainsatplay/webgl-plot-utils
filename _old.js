@@ -35,7 +35,7 @@ export class WebglLinePlotUtils {
         this.overlay;
         this.overlayctx;
 
-        this.plot = new WebglPlotBundle.WebglPlot(canvas);
+        this.plot = new WebglPlot(canvas);
 
         if(this.useOverlay) {
             if(overlayCanvas) {
