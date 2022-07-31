@@ -10,6 +10,7 @@ export type WebglLineProps = {
     xAxis:boolean, //draw an xaxis, default true
     xColor?:[number,number,number,number]|ColorRGBA, //default gray and transparent
     width?:number, //use thick triangle strip lines instead, 6x slower!!
+    interpolate?:boolean, //we can up or downsample data provided to update arrays, else we will use the end of the array for the slice (assuming you're pushing to an array and visualizing the incoming data)
     [key:string]:any
 } & (
     { //define a fixed number of points
@@ -33,7 +34,6 @@ export type WebglLinePlotProps = {
     lines:{
         [key:string]:WebglLineProps
     },
-    interpolate?:boolean, //we can up or downsample data provided to update arrays, else we will use the end of the array for the slice (assuming you're pushing to an array and visualizing the incoming data)
     dividerColor?:[number,number,number,number]|ColorRGBA, //default gray
     [key:string]:any
 }
@@ -109,6 +109,12 @@ export class WebglLinePlotUtil {
             s.line.arrangeX();
 
             if(s.values) {
+                if(settings.overlay) {
+                    let max = Math.max(...s.values);
+                    let min = Math.min(...s.values);
+                    s.ymin = min;
+                    s.ymax = max;
+                }
                 if(s.values.length !== points) {
                     if(s.interpolate) {
                         if(s.values.length > points) {
@@ -116,9 +122,13 @@ export class WebglLinePlotUtil {
                         } else if (s.values.length < points) {
                             s.values = WebglLinePlotUtil.upsample(s.values, points);
                         }
-                    } else s.values = s.values.slice(s.values.length-points);
+                    } else {
+                        if(s.values.length > s.points) s.values = s.values.slice(s.values.length-s.points);
+                        else s.values = [...new Array(s.points-s.values.length).fill(0), ...s.values];
+                    }
                 }
             } else s.values = new Array(points).fill(0);
+
             if(!('autoscale' in s)) s.autoscale = true; 
             if(!s.position) s.position = i;
             if(s.autoscale) {
@@ -173,21 +183,20 @@ export class WebglLinePlotUtil {
     }
 
     //pass the info object and the lines you want to update
-    update(plotInfo:WebglLinePlotInfo|string, lines?:{[key:string]:{values:number[]}}, draw:boolean=true) {
+    update(plotInfo:WebglLinePlotInfo|string, lines?:{[key:string]:{values:number[],position?:number,autoscale?:boolean,interpolate?:boolean}}, draw:boolean=true) {
         if(typeof plotInfo === 'string') plotInfo = this.plots[plotInfo];
         if(!plotInfo) return;
         if(lines) for(const line in lines) {
             if(plotInfo.settings.lines[line]) {
                 let s = plotInfo.settings.lines[line] as any;
-                let l = lines[line];
-                if(l.values) {
+                Object.assign(s,lines);
+                if(s.values) {
                     if(plotInfo.settings.overlay) {
-                        let max = Math.max(...l.values);
-                        let min = Math.min(...l.values);
+                        let max = Math.max(...s.values);
+                        let min = Math.min(...s.values);
                         s.ymin = min;
                         s.ymax = max;
                     }
-                    s.values = l.values;
                     if(s.values.length !== s.points) {
                         if(s.interpolate) {
                             if(s.values.length > s.points) {
@@ -195,7 +204,10 @@ export class WebglLinePlotUtil {
                             } else if (s.values.length < s.points) {
                                 s.values = WebglLinePlotUtil.upsample(s.values, s.points);
                             }
-                        } else s.values = s.values.slice(s.values.length-s.points);
+                        } else {
+                            if(s.values.length > s.points) s.values = s.values.slice(s.values.length-s.points);
+                            else s.values = [...new Array(s.points-s.values.length).fill(0), ...s.values];
+                        }
                     }
                     if(s.autoscale) {
                         s.values = WebglLinePlotUtil.autoscale(s.values, s.position, plotInfo.settings.nLines, s.centerZero);

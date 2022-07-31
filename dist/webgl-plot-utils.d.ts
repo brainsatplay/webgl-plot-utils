@@ -8,6 +8,7 @@ export declare type WebglLineProps = {
     xAxis: boolean;
     xColor?: [number, number, number, number] | ColorRGBA;
     width?: number;
+    interpolate?: boolean;
     [key: string]: any;
 } & ({
     nPoints: number;
@@ -29,7 +30,6 @@ export declare type WebglLinePlotProps = {
     lines: {
         [key: string]: WebglLineProps;
     };
-    interpolate?: boolean;
     dividerColor?: [number, number, number, number] | ColorRGBA;
     [key: string]: any;
 };
@@ -48,6 +48,9 @@ export declare class WebglLinePlotUtil {
     update(plotInfo: WebglLinePlotInfo | string, lines?: {
         [key: string]: {
             values: number[];
+            position?: number;
+            autoscale?: boolean;
+            interpolate?: boolean;
         };
     }, draw?: boolean): void;
     updateLine(line: WebglLine | WebglThickLine, values: number[], interpolate?: boolean, autoscale?: boolean, autoscalePosition?: number, nLines?: number, centerZero?: boolean): boolean;
