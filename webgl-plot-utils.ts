@@ -40,7 +40,7 @@ export type WebglLinePlotProps = {
 
 export type WebglLinePlotInfo = {
     plot:WebglPlot,
-    settings:WebglLinePlotProps & { overlayCtx?:CanvasRenderingContext2D },
+    settings:WebglLinePlotProps,
 }
 
 export class WebglLinePlotUtil {
