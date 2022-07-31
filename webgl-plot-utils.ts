@@ -429,7 +429,9 @@ export class WebglLinePlotUtil {
 
     //e.g. mimic arduino serial plotter data, make sure we return an object of key:array pairs
     static formatDataForCharts(
-        data:{[key:string]:number[]|number|{values:number[]|number,[key:string]:any}}|string|((number|number[])[])|number, 
+        data:{
+            [key:string]:number[]|number|{values:number[]|number,[key:string]:any}
+        }|string|((number|number[])[])|number, 
         key?:string //if passing a single value
     ) {
         //take incoming data formats and return them in the format that our charting library likes so we can blindly pass stuff in
