@@ -7,7 +7,7 @@ Incl thicc (triangle strip) lines, autoscaling for stacking, auto-interpolation 
 
 
 ```ts
-export type WebglLineProps = {
+type WebglLineProps = {
     values?:number[],
     color?:[number,number,number,number]|ColorRGBA,  
     position?:number, //stack position? default is the order you define the lines in this object or you can have them overlap
@@ -25,7 +25,7 @@ export type WebglLineProps = {
         sps:number
     })
 
-export type WebglLinePlotProps = {
+type WebglLinePlotProps = {
     canvas:HTMLCanvasElement,
     webglOptions?:{
         antialias?:boolean,
@@ -43,6 +43,8 @@ export type WebglLinePlotProps = {
     dividerColor?:[number,number,number,number]|ColorRGBA, //default gray
     [key:string]:any
 }
+
+import {WebglLinePlotUtil} from 'webgl=plot-utils'
 
 let plotter = new WebglLinePlotUtil()
 
