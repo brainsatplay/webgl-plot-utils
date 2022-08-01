@@ -33,7 +33,7 @@ export type WebglLinePlotProps = {
     },
     overlay?:HTMLCanvasElement|boolean, //automatically print the max and min values of the stacked lines
     lines:{
-        [key:string]:WebglLineProps
+        [key:string]:WebglLineProps|number[]
     },
     dividerColor?:[number,number,number,number]|ColorRGBA, //default gray
     [key:string]:any
@@ -82,6 +82,13 @@ export class WebglLinePlotUtil {
         settings.nLines = nLines;
         for(const line in settings.lines) {
             let s = settings.lines[line] as any;
+
+            if(Array.isArray(s)) {
+                s = {
+                    values:s,
+                };
+                settings.lines[line] = s;
+            }
 
             if(s.color) {
                 if(Array.isArray(s.color)) {
@@ -172,6 +179,22 @@ export class WebglLinePlotUtil {
             i++;
         }
 
+        if(typeof settings.overlay === 'object') {
+            let canvas = settings.overlay;
+            let ctx = settings.overlayCtx as CanvasRenderingContext2D;
+            ctx.clearRect(0,0,settings.overlay.width,settings.overlay.height);
+            ctx.font = '1em Courier';
+            ctx.fillStyle = 'white';
+            for(const line in settings.lines) {
+                let s = settings.lines[line] as WebglLineProps;
+                if(s.useOverlay || !('useOverlay' in s)) {
+                    ctx.fillText(line, 20,canvas.height*(s.position as number + 0.1)/settings.nLines);
+                    ctx.fillText(s.ymax, canvas.width - 70,canvas.height*(s.position as number + 0.1)/settings.nLines);
+                    ctx.fillText(s.ymin, canvas.width - 70,canvas.height*(s.position as number + 0.9)/settings.nLines);
+                }
+            }
+        }
+
         plot.update();
 
         return this.plots[settings._id];
@@ -199,18 +222,14 @@ export class WebglLinePlotUtil {
     update(
         plotInfo:WebglLinePlotInfo|string, 
         lines?:{
-            [key:string]:{
-                values:number[],
-                position?:number,
-                autoscale?:boolean,
-                interpolate?:boolean
-            }|number[]
+            [key:string]:WebglLineProps|number[]| { [key: string]: any; values: number[]; }
         }, 
         draw:boolean=true
-        ) {
+    ) {
         if(typeof plotInfo === 'string') plotInfo = this.plots[plotInfo];
         if(!plotInfo) return false;
         if(lines) {
+            let unrecognized = false;
             for(const line in lines) {
                 if(plotInfo.settings.lines[line]) {
                     let s = plotInfo.settings.lines[line] as any;
@@ -241,7 +260,7 @@ export class WebglLinePlotUtil {
                         }
                         s.values.forEach((y,i) => s.line.setY(i,y));
                     }
-                }
+                } 
             }
         }
 
@@ -252,7 +271,7 @@ export class WebglLinePlotUtil {
             ctx.font = '1em Courier';
             ctx.fillStyle = 'white';
             for(const line in plotInfo.settings.lines) {
-                let s = plotInfo.settings.lines[line];
+                let s = plotInfo.settings.lines[line] as WebglLineProps;
                 if(s.useOverlay || !('useOverlay' in s)) {
                     ctx.fillText(line, 20,canvas.height*(s.position as number + 0.1)/plotInfo.settings.nLines);
                     ctx.fillText(s.ymax, canvas.width - 70,canvas.height*(s.position as number + 0.1)/plotInfo.settings.nLines);
@@ -476,7 +495,7 @@ export class WebglLinePlotUtil {
             else data = {0:[data]};
         }
     
-        return data as {[key:string]:number[]|{values:number[],[key:string]:any}};
+        return data as {[key:string]:(number[]|{values:number[],[key:string]:any}|WebglLineProps)};
     }
 
     //pad an array based on a time interval between sample sets, averaging slope

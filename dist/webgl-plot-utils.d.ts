@@ -29,7 +29,7 @@ export declare type WebglLinePlotProps = {
     };
     overlay?: HTMLCanvasElement | boolean;
     lines: {
-        [key: string]: WebglLineProps;
+        [key: string]: WebglLineProps | number[];
     };
     dividerColor?: [number, number, number, number] | ColorRGBA;
     [key: string]: any;
@@ -46,12 +46,10 @@ export declare class WebglLinePlotUtil {
     deinitPlot(info: WebglLinePlotInfo | string): boolean;
     reinitPlot(info: WebglLinePlotInfo | string, settings: WebglLinePlotProps): WebglLinePlotInfo;
     update(plotInfo: WebglLinePlotInfo | string, lines?: {
-        [key: string]: {
+        [key: string]: WebglLineProps | number[] | {
+            [key: string]: any;
             values: number[];
-            position?: number;
-            autoscale?: boolean;
-            interpolate?: boolean;
-        } | number[];
+        };
     }, draw?: boolean): boolean;
     updateLine(line: WebglLine | WebglThickLine, values: number[], interpolate?: boolean, autoscale?: boolean, autoscalePosition?: number, nLines?: number, centerZero?: boolean): boolean;
     static autoscale(array: any, lineIdx?: number, nLines?: number, centerZero?: boolean): any;
@@ -67,7 +65,7 @@ export declare class WebglLinePlotUtil {
             [key: string]: any;
         };
     } | string | ((number | number[])[]) | number, key?: string): {
-        [key: string]: number[] | {
+        [key: string]: number[] | WebglLineProps | {
             [key: string]: any;
             values: number[];
         };
