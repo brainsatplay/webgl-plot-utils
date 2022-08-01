@@ -5,7 +5,7 @@ export declare type WebglLineProps = {
     position?: number;
     autoscale?: boolean;
     centerZero?: boolean;
-    xAxis: boolean;
+    xAxis?: boolean;
     xColor?: [number, number, number, number] | ColorRGBA;
     width?: number;
     interpolate?: boolean;

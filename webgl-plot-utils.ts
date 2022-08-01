@@ -7,7 +7,7 @@ export type WebglLineProps = {
     position?:number, //stack position? default is the order you define the lines in this object or you can have them overlap
     autoscale?:boolean, //autoscale the data to -1 and 1 and stack, default true so you can just pass whatever
     centerZero?:boolean, //center the line at zero (if autoscaling), i.e. the positive and negative axis get the same amount of space, default false
-    xAxis:boolean, //draw an xaxis, default true
+    xAxis?:boolean, //draw an xaxis, default true
     xColor?:[number,number,number,number]|ColorRGBA, //default gray and transparent
     width?:number, //use thick triangle strip lines instead, 6x slower!!
     interpolate?:boolean, //we can up or downsample data provided to update arrays, else we will use the end of the array for the slice (assuming you're pushing to an array and visualizing the incoming data)
