@@ -36,6 +36,8 @@ export type WebglLinePlotProps = {
         [key:string]:WebglLineProps|number[]
     },
     dividerColor?:[number,number,number,number]|ColorRGBA, //default gray
+    generateNewLines?:boolean, //if unrecognized lines are in an update, reinit the plot?
+    cleanGeneration?:boolean, //on regeneration, remove any lines not in the current update?
     [key:string]:any
 }
 
@@ -229,7 +231,7 @@ export class WebglLinePlotUtil {
         if(typeof plotInfo === 'string') plotInfo = this.plots[plotInfo];
         if(!plotInfo) return false;
         if(lines) {
-            let unrecognized = false;
+            let regenerate = false;
             for(const line in lines) {
                 if(plotInfo.settings.lines[line]) {
                     let s = plotInfo.settings.lines[line] as any;
@@ -260,7 +262,28 @@ export class WebglLinePlotUtil {
                         }
                         s.values.forEach((y,i) => s.line.setY(i,y));
                     }
-                } 
+                } else if(plotInfo.settings.generateNewLines) {
+                    if(Array.isArray(lines[line])) {
+                        lines[line] = {values: lines[line] as number[]};
+                    }
+                    if(!(lines[line] as any).nSec && !(lines[line] as any).nPoints) {
+                        (lines[line] as any).nPoints = 1000;
+                    }
+                    plotInfo.settings.lines[line] = lines[line] as WebglLineProps;
+                    regenerate = true;
+                }
+            }
+
+            if(regenerate) {
+                if(plotInfo.settings.cleanGeneration) {
+                    let newlines = Object.assign({},plotInfo.settings.lines);
+                    for(const line in plotInfo.settings.lines) {
+                        if(!lines[line]) delete newlines[line]; //delete the old setting
+                    }
+                    plotInfo.settings.lines = newlines;
+                }
+                this.reinitPlot(plotInfo,plotInfo.settings);
+                return true;
             }
         }
 

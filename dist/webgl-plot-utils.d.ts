@@ -32,6 +32,8 @@ export declare type WebglLinePlotProps = {
         [key: string]: WebglLineProps | number[];
     };
     dividerColor?: [number, number, number, number] | ColorRGBA;
+    generateNewLines?: boolean;
+    cleanGeneration?: boolean;
     [key: string]: any;
 };
 export declare type WebglLinePlotInfo = {
