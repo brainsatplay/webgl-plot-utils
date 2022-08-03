@@ -115,7 +115,7 @@ export class WebglLinePlotUtil {
                     s.color = new ColorRGBA(...s.color as [number,number,number,number]);
                 }
             } else {
-                let rgb = WebglLinePlotUtil.HSLToRGB(360*(i/nLines)%360,100,50);
+                let rgb = WebglLinePlotUtil.HSLToRGB(360*(i/nLines)%360,100,50,1);
                 s.color = new ColorRGBA(...rgb, 1);
             }
 
@@ -244,8 +244,7 @@ export class WebglLinePlotUtil {
         if(!info.plot) return undefined;
         info.plot.clear();
         info.plot.removeAllLines();
-        Object.assign(info.settings,settings);
-        return this.initPlot(info.settings,info.plot);
+        return this.initPlot(settings,info.plot);
     }
 
     //pass the info object and the lines you want to update
@@ -448,7 +447,7 @@ export class WebglLinePlotUtil {
         return array;
     }
 
-    static HSLToRGB(h,s,l):[number,number,number] {
+    static HSLToRGB(h,s,l, scalar=255):[number,number,number] {
         // Must be fractions of 1
         s /= 100;
         l /= 100;
@@ -473,9 +472,9 @@ export class WebglLinePlotUtil {
         } else if (300 <= h && h < 360) {
             r = c; g = 0; b = x;
         }
-        r = Math.round((r + m) * 255);
-        g = Math.round((g + m) * 255);
-        b = Math.round((b + m) * 255);
+        r = (r + m) * scalar;
+        g = (g + m) * scalar;
+        b = (b + m) * scalar;
 
         return [r,g,b];
     }
@@ -517,20 +516,29 @@ export class WebglLinePlotUtil {
                     d[i] = arr;
                 });
                 data = d;
+                if(isNaN(data[0][0])) return undefined;//throw new Error(`Invalid data format: ${data}`);
             }
-            else if(key) data = {[key]:data} as any;
-            else data = {0:data} as any;
+            else if(key) {
+                data = {[key]:data} as any;
+                if(isNaN(data[key][0]))  return undefined;//throw new Error(`Invalid data format: ${data}`);
+            }
+            else {
+                data = {0:data} as any;
+                if(isNaN(data[0][0]))  return undefined;//throw new Error(`Invalid data format: ${data}`);
+            }
         } else if(typeof data === 'object') { //swap incoming key:value pairs into our charting library format
             for(const key in data) {
                 if(typeof data[key] === 'number') data[key] = [data[key] as number];
                 else if ((data[key] as any)?.values) {
                     if(typeof (data[key] as any).values === 'number') 
-                    (data[key] as any).values = [(data[key] as any).values];
+                        (data[key] as any).values = [(data[key] as any).values];
                 }
+                if(isNaN(data[key][0]))  return undefined;//throw new Error(`Invalid data format: ${data}`);
+                
             }
         }
         else if (typeof data === 'string') { //let's parse different string formats 
-            let split;
+            let split:any;
             if(data.includes('\t')) {
                 split = data.split('\t');
             } else if (data.includes(',')) {
@@ -544,6 +552,7 @@ export class WebglLinePlotUtil {
                 } else {
                     data[i] = [parseFloat(val)];
                 }
+                if(isNaN(data[i])) return undefined;//throw new Error(`Invalid data format: ${data}`);
             });
     
         } else if (typeof data === 'number') {
@@ -551,7 +560,7 @@ export class WebglLinePlotUtil {
             else data = {0:[data]};
         }
     
-        return data as {[key:string]:(number[]|{values:number[],[key:string]:any}|WebglLineProps)};
+        return data;// as {[key:string]:(number[]|{values:number[],[key:string]:any}|WebglLineProps)};
     }
 
     //pad an array based on a time interval between sample sets, averaging slope
