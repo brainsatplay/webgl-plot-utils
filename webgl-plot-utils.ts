@@ -241,10 +241,11 @@ export class WebglLinePlotUtil {
     //apply new settings e.g. color, width, nPoints, etc.
     reinitPlot(info:WebglLinePlotInfo|string, settings:WebglLinePlotProps) {
         if(typeof info === 'string') info = this.plots[info];
+        if(!info.plot) return undefined;
         info.plot.clear();
         info.plot.removeAllLines();
-
-        return this.initPlot(settings,info.plot);
+        Object.assign(info.settings,settings);
+        return this.initPlot(info.settings,info.plot);
     }
 
     //pass the info object and the lines you want to update
