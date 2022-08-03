@@ -23,6 +23,8 @@ export type WebglLineProps = {
 
 export type WebglLinePlotProps = {
     canvas:HTMLCanvasElement,
+    width?:number,
+    height?:number,
     webglOptions?:{
         antialias?:boolean,
         transparent?:boolean,
@@ -55,18 +57,17 @@ export class WebglLinePlotUtil {
 
         if(!plot)
             plot = new WebglPlot(settings.canvas,settings.webglOptions);
-        
 
         if(!settings._id) {
             settings._id = `plot${Math.floor(Math.random()*1000000000000000)}`;
-            
-            let info:any = {
-                plot,
-                settings
-            };
-            this.plots[settings._id] = info;
         }
-        
+
+        let info:any = {
+            plot,
+            settings
+        };
+       
+        this.plots[settings._id] = info;
 
         if(settings.overlay) { //be sure to transfer this on workers
             if(typeof settings.overlay !== 'object') {
@@ -77,6 +78,23 @@ export class WebglLinePlotUtil {
                 settings.canvas.appendChild(settings.overlay);
             }
             settings.overlayCtx = settings.overlay.getContext('2d');
+        }
+        
+        if(settings.width) {
+            settings.canvas.width = settings.width;
+            if(settings.canvas.style) settings.canvas.style.width = settings.width+'px';
+            if(typeof settings.overlay === 'object') {
+                settings.overlay.width = settings.width;
+                if(settings.overlay.style) settings.overlay.style.width = settings.width+'px';
+            }
+        }
+        if(settings.height) {
+            settings.canvas.height = settings.height;
+            if(settings.canvas.style) settings.canvas.style.height = settings.height+'px';
+            if(typeof settings.overlay === 'object') {
+                settings.overlay.height = settings.height;
+                if(settings.overlay.style) settings.overlay.style.height = settings.height+'px';
+            }
         }
 
         let i = 0;
@@ -118,6 +136,7 @@ export class WebglLinePlotUtil {
 
             s.line.arrangeX();
 
+            //console.log(JSON.stringify(s.values));
             if(s.values) {
                 if(settings.overlay) {
                     let max = Math.max(...s.values);
@@ -138,12 +157,14 @@ export class WebglLinePlotUtil {
                     }
                 }
             } else s.values = new Array(points).fill(0);
+            //console.log('before',JSON.stringify(s.values));
 
             if(!('autoscale' in s)) s.autoscale = true; 
             if(!s.position) s.position = i;
             if(s.autoscale) {
                 s.values = WebglLinePlotUtil.autoscale(s.values, s.position ? s.position : i, nLines, s.centerZero);
             }
+            //console.log('after',JSON.stringify(s.values));
 
             s.values.forEach((y,i) => s.line.setY(i,y));
 
@@ -152,13 +173,17 @@ export class WebglLinePlotUtil {
             if(!('xAxis' in s)) s.xAxis = true; 
 
             if(s.xAxis) {
-                if(s.xColor) if(Array.isArray(s.xColor)) s.xColor = new ColorRGBA(...s.xColor as [number,number,number,number]);
-                else s.xColor = new ColorRGBA(1,1,1,0.3);
+                if(s.xColor) {
+                    if(Array.isArray(s.xColor)) 
+                        s.xColor = new ColorRGBA(...s.xColor as [number,number,number,number]);
+                } else s.xColor = new ColorRGBA(1,1,1,0.3);
 
                 let x = new WebglLine(s.xColor,2);
-                if(s.autoscale) x.constY((i+1)*2/nLines-1-1/nLines);
+                let xHeight = (i+1)*2/nLines-1-1/nLines;
+                if(s.autoscale) x.constY(xHeight);
                 else x.constY(0.5); //just use center line
                 x.arrangeX();
+                x.xy[2] = 1;
 
                 s.x = x;
             
@@ -172,6 +197,7 @@ export class WebglLinePlotUtil {
                 let divider = new WebglLine(settings.dividerColor,2);
                 divider.constY((i+1)*2/nLines - 1);
                 divider.arrangeX();
+                divider.xy[2] = 1;
 
                 s.divider = divider;
 
@@ -197,6 +223,7 @@ export class WebglLinePlotUtil {
             }
         }
 
+        //console.log(plot, this.plots[settings._id])
         plot.update();
 
         return this.plots[settings._id];
@@ -257,7 +284,7 @@ export class WebglLinePlotUtil {
                                 }
                             } else {
                                 if(s.values.length > s.points) s.values = s.values.slice(s.values.length-s.points);
-                                else s.values = [...oldvalues.slice(s.points-s.values.length), ...s.values]; //circular buffer
+                                else s.values = [...oldvalues.slice(s.values.length), ...s.values]; //circular buffer
                             }
                         }
                         s.values.forEach((y,i) => s.line.setY(i,y));
@@ -326,7 +353,7 @@ export class WebglLinePlotUtil {
                 }
             } else {
                 if(values.length > line.numPoints) values = values.slice(values.length-line.numPoints);
-                else values = [...new Array(line.numPoints-values.length).fill(0), ...values];
+                else values = [...new Array(values.length).fill(0), ...values];
             } 
         }
         if(autoscale) {
@@ -344,14 +371,19 @@ export class WebglLinePlotUtil {
         let min = Math.min(...array);
 
         let _lines = 1/nLines;
-        let scalar;
+        let scalar = 1;
         if(centerZero) {
             let absmax = Math.max(Math.abs(min),Math.abs(max));
-            scalar = _lines/absmax;
+            if(absmax !== 0) scalar = _lines/absmax;
             return array.map(y => (y*scalar+(_lines*(lineIdx+1)*2-1-_lines))); //scaled array
         }
         else {
-            scalar = _lines/(max-min);
+            if(max === min) {
+                if(max !== 0) {
+                    scalar = _lines/max;
+                }
+            }
+            else scalar = _lines/(max-min);
             return array.map(y => (2*((y-min)*scalar-(1/(2*nLines)))+(_lines*(lineIdx+1)*2-1-_lines))); //scaled array
         }
     }
@@ -455,7 +487,7 @@ export class WebglLinePlotUtil {
                 arr.length-newEntries.length,
                 ...arr.slice(newEntries.length)
             ).splice(
-                    arr.length-newEntries.length,
+                    newEntries.length,
                     arr.length,
                     ...newEntries
                 );

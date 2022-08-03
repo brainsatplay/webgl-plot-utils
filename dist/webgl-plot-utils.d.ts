@@ -19,6 +19,8 @@ export declare type WebglLineProps = {
 });
 export declare type WebglLinePlotProps = {
     canvas: HTMLCanvasElement;
+    width?: number;
+    height?: number;
     webglOptions?: {
         antialias?: boolean;
         transparent?: boolean;
