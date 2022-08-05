@@ -160,7 +160,7 @@ export class WebglLinePlotUtil {
             //console.log('before',JSON.stringify(s.values));
 
             if(!('autoscale' in s)) s.autoscale = true; 
-            if(!s.position) s.position = i;
+            if(!s.position) s.position = settings.nLines - i - 1;
             if(s.autoscale) {
                 s.values = WebglLinePlotUtil.autoscale(s.values, s.position ? s.position : i, nLines, s.centerZero);
             }
@@ -216,9 +216,10 @@ export class WebglLinePlotUtil {
             for(const line in settings.lines) {
                 let s = settings.lines[line] as WebglLineProps;
                 if(s.useOverlay || !('useOverlay' in s)) {
-                    ctx.fillText(line, 20,canvas.height*(s.position as number + 0.1)/settings.nLines);
-                    ctx.fillText(s.ymax, canvas.width - 70,canvas.height*(s.position as number + 0.1)/settings.nLines);
-                    ctx.fillText(s.ymin, canvas.width - 70,canvas.height*(s.position as number + 0.9)/settings.nLines);
+                    let pos = settings.nLines - s.position - 1;
+                    ctx.fillText(line, 20,canvas.height*(pos as number + 0.1)/settings.nLines);
+                    ctx.fillText(s.ymax, canvas.width - 70,canvas.height*(pos as number + 0.1)/settings.nLines);
+                    ctx.fillText(s.ymin, canvas.width - 70,canvas.height*(pos as number + 0.9)/settings.nLines);
                 }
             }
         }
@@ -323,9 +324,10 @@ export class WebglLinePlotUtil {
             for(const line in plotInfo.settings.lines) {
                 let s = plotInfo.settings.lines[line] as WebglLineProps;
                 if(s.useOverlay || !('useOverlay' in s)) {
-                    ctx.fillText(line, 20,canvas.height*(s.position as number + 0.1)/plotInfo.settings.nLines);
-                    ctx.fillText(s.ymax, canvas.width - 70,canvas.height*(s.position as number + 0.1)/plotInfo.settings.nLines);
-                    ctx.fillText(s.ymin, canvas.width - 70,canvas.height*(s.position as number + 0.9)/plotInfo.settings.nLines);
+                    let pos = plotInfo.settings.nLines - s.position - 1;
+                    ctx.fillText(line, 20,canvas.height*(pos as number + 0.1)/plotInfo.settings.nLines);
+                    ctx.fillText(s.ymax, canvas.width - 70,canvas.height*(pos as number + 0.1)/plotInfo.settings.nLines);
+                    ctx.fillText(s.ymin, canvas.width - 70,canvas.height*(pos as number + 0.9)/plotInfo.settings.nLines);
                 }
             }
         }
