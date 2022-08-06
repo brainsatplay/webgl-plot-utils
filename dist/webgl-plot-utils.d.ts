@@ -41,6 +41,7 @@ export declare type WebglLinePlotProps = {
 export declare type WebglLinePlotInfo = {
     plot: WebglPlot;
     settings: WebglLinePlotProps;
+    initial: WebglLinePlotProps;
 };
 export declare class WebglLinePlotUtil {
     plots: {

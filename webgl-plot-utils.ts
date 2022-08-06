@@ -45,7 +45,8 @@ export type WebglLinePlotProps = {
 
 export type WebglLinePlotInfo = {
     plot:WebglPlot,
-    settings:WebglLinePlotProps,
+    settings:WebglLinePlotProps, //settings, modified
+    initial:WebglLinePlotProps //original unmodified settings
 }
 
 export class WebglLinePlotUtil {
@@ -60,14 +61,12 @@ export class WebglLinePlotUtil {
 
         if(!settings._id) {
             settings._id = `plot${Math.floor(Math.random()*1000000000000000)}`;
+        } else if(this.plots[settings._id]) {
+            let oldsettings = this.plots[settings._id].settings;
+            settings = Object.assign(oldsettings, settings);
+            
         }
 
-        let info:any = {
-            plot,
-            settings
-        };
-       
-        this.plots[settings._id] = info;
 
         if(settings.overlay) { //be sure to transfer this on workers
             if(typeof settings.overlay !== 'object') {
@@ -77,7 +76,7 @@ export class WebglLinePlotUtil {
                 settings.overlay.height = settings.canvas.height;
                 settings.canvas.appendChild(settings.overlay);
             }
-            settings.overlayCtx = settings.overlay.getContext('2d');
+            if(!settings.overlayCtx) settings.overlayCtx = settings.overlay.getContext('2d');
         }
         
         if(settings.width) {
@@ -96,6 +95,14 @@ export class WebglLinePlotUtil {
                 if(settings.overlay.style) settings.overlay.style.height = settings.height+'px';
             }
         }
+
+        let info:any = {
+            plot,
+            settings,
+            initial:Object.assign({},settings)
+        };
+       
+        this.plots[settings._id] = info;
 
         let i = 0;
         let nLines = Object.keys(settings.lines).length;
@@ -227,6 +234,7 @@ export class WebglLinePlotUtil {
         //console.log(plot, this.plots[settings._id])
         plot.update();
 
+        //console.log('init plot with settings', settings);
         return this.plots[settings._id];
 
     }
@@ -245,6 +253,7 @@ export class WebglLinePlotUtil {
         if(!info.plot) return undefined;
         info.plot.clear();
         info.plot.removeAllLines();
+        if(info.settings.overlayCtx) info.settings.overlayCtx.clearRect(0,0,(info.settings.overlay as any)?.width,(info.settings.overlay as any)?.height)
         return this.initPlot(settings,info.plot);
     }
 
@@ -290,27 +299,30 @@ export class WebglLinePlotUtil {
                         }
                         s.values.forEach((y,i) => s.line.setY(i,y));
                     }
-                } else if(plotInfo.settings.generateNewLines) {
+                }
+                else if(plotInfo.settings.generateNewLines) {
                     if(Array.isArray(lines[line])) {
                         lines[line] = {values: lines[line] as number[]};
                     }
                     if(!(lines[line] as any).nSec && !(lines[line] as any).nPoints) {
                         (lines[line] as any).nPoints = 1000;
                     }
-                    plotInfo.settings.lines[line] = lines[line] as WebglLineProps;
                     regenerate = true;
                 }
             }
 
             if(regenerate) {
                 if(plotInfo.settings.cleanGeneration) {
-                    let newlines = Object.assign({},plotInfo.settings.lines);
-                    for(const line in plotInfo.settings.lines) {
-                        if(!lines[line]) delete newlines[line]; //delete the old setting
-                    }
-                    plotInfo.settings.lines = newlines;
+                    Object.keys(plotInfo.initial.lines).forEach((k) => {
+                        if(!lines[k]) delete (plotInfo as any).initial[k];
+                    })
+                    Object.keys(lines).forEach((k) => {
+                        if(!(plotInfo as any).initial.lines[k]) {
+                            (plotInfo as any).initial.lines[k] = lines[k];
+                        }
+                    })
                 }
-                this.reinitPlot(plotInfo,plotInfo.settings);
+                this.reinitPlot(plotInfo,plotInfo.initial);
                 return true;
             }
         }
@@ -547,16 +559,20 @@ export class WebglLinePlotUtil {
                 split = data.split(',');
             } 
             data = {};
-            split.forEach((val,i) => {
-                if(val.includes(':')) {
-                    let [key,v] = val.split(':');
-                    data[key] = [parseFloat(v)];
-                } else {
-                    data[i] = [parseFloat(val)];
-                }
-                if(isNaN(data[i])) return undefined;//throw new Error(`Invalid data format: ${data}`);
-            });
-    
+            if(split) {
+                split.forEach((val,i) => {
+                    if(val.includes(':')) {
+                        let [key,v] = val.split(':');
+                        let fl = parseFloat(v);
+                        if(fl) data[key] = [fl];
+                        else return undefined;
+                    } else {
+                        let fl = parseFloat(val);
+                        if(fl) data[i] = [fl];
+                        else return undefined;
+                    }
+                });
+            }
         } else if (typeof data === 'number') {
             if(key) data = {[key]:[data]};    
             else data = {0:[data]};
