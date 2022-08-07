@@ -109,12 +109,12 @@ export class WebglLinePlotUtil {
         };
        
         this.plots[settings._id] = info;
-
-        console.log(settings);
-
+        
         let i = 0;
         let nLines = Object.keys(settings.lines).length;
         settings.nLines = nLines;
+
+        console.log(settings);
         for(const line in settings.lines) {
             let s = settings.lines[line] as any;
 
@@ -158,6 +158,8 @@ export class WebglLinePlotUtil {
                     let min = Math.min(...s.values);
                     s.ymin = min;
                     s.ymax = max;
+                    let abs = Math.abs(s.ymin);
+                    s.absmax = abs > s.ymax ? abs : s.ymax;
                 }
                 if(s.values.length !== points) {
                     if(s.interpolate) {
@@ -176,6 +178,7 @@ export class WebglLinePlotUtil {
             //console.log('before',JSON.stringify(s.values));
 
             if(!('autoscale' in s)) s.autoscale = true; 
+            if(s.points > 5000) s.autoscale = false; //limit call stack
             if(!s.position) s.position = settings.nLines - i - 1;
             if(s.autoscale) {
                 s.values = WebglLinePlotUtil.autoscale(s.values, s.position ? s.position : i, nLines, s.centerZero);
@@ -299,7 +302,7 @@ export class WebglLinePlotUtil {
         if(lines) {
             let regenerate = false;
             for(const line in lines) {
-                if(plotInfo.settings.lines[line]) {
+                if(plotInfo.settings.lines[line] && (plotInfo.settings.lines[line] as any).line) {
                     let s = plotInfo.settings.lines[line] as any;
                     let oldvalues = s.values;
                     if(Array.isArray(lines[line])) s.values = lines[line];
@@ -310,6 +313,8 @@ export class WebglLinePlotUtil {
                             let min = Math.min(...s.values);
                             s.ymin = min;
                             s.ymax = max;
+                            let abs = Math.abs(s.ymin);
+                            s.absmax = abs > s.ymax ? abs : s.ymax;
                         }
                         if(s.autoscale) {
                             s.values = WebglLinePlotUtil.autoscale(s.values, s.position, plotInfo.settings.nLines, s.centerZero);
@@ -326,7 +331,12 @@ export class WebglLinePlotUtil {
                                 else s.values = [...oldvalues.slice(s.values.length), ...s.values]; //circular buffer
                             }
                         }
-                        s.values.forEach((y,i) => s.line.setY(i,y));
+                        s.values.forEach((y,i) => { 
+                            if(!s.autoscale && s.absmax > 1){
+                                s.line.setY(i,y/s.absmax)
+                            }
+                            else s.line.setY(i,y)
+                        });
                     }
                 }
                 else if(plotInfo.settings.generateNewLines) {
@@ -341,17 +351,15 @@ export class WebglLinePlotUtil {
             }
 
             if(regenerate) {
-                if(plotInfo.settings.cleanGeneration) {
+                if(!plotInfo.settings.cleanGeneration) {
                     Object.keys(plotInfo.initial.lines).forEach((k) => {
-                        if(!lines[k]) delete (plotInfo as any).initial[k];
-                    })
-                    Object.keys(lines).forEach((k) => {
-                        if(!(plotInfo as any).initial.lines[k]) {
-                            (plotInfo as any).initial.lines[k] = lines[k];
+                        if(!lines[k]) lines[k] = (plotInfo as any).initial.lines[k];
+                        else {
+                            lines[k] = Object.assign((plotInfo as any).initial.lines[k], lines[k])
                         }
-                    })
+                    });
                 }
-                this.reinitPlot(plotInfo,plotInfo.initial);
+                this.reinitPlot(plotInfo,{_id:plotInfo.settings._id, lines} as any);
                 return true;
             }
         }
