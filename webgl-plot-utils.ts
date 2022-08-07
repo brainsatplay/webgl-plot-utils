@@ -96,10 +96,15 @@ export class WebglLinePlotUtil {
             }
         }
 
+        let initialLns = {};
+        for(const key in settings.lines) {
+            initialLns[key] = Object.assign({},initialLns[key])
+        }
+
         let info:any = {
             plot,
             settings,
-            initial:Object.assign({},settings),
+            initial:Object.assign(Object.assign({},settings),{lines:initialLns}),
             anim:()=>{ plot.update() } //run in requestAnimationFrame to throttle FPS
         };
        
@@ -268,7 +273,8 @@ export class WebglLinePlotUtil {
             delete settings.canvas;
             delete settings.overlay;
             delete settings.overlayCtx;
-            return info.initial;
+            console.log(settings);
+            return settings;
         } return undefined;
     }
 

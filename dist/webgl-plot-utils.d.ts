@@ -42,6 +42,7 @@ export declare type WebglLinePlotInfo = {
     plot: WebglPlot;
     settings: WebglLinePlotProps;
     initial: WebglLinePlotProps;
+    anim: any;
 };
 export declare class WebglLinePlotUtil {
     plots: {
@@ -50,6 +51,7 @@ export declare class WebglLinePlotUtil {
     initPlot(settings: WebglLinePlotProps, plot?: WebglPlot): WebglLinePlotInfo;
     deinitPlot(info: WebglLinePlotInfo | string): boolean;
     reinitPlot(info: WebglLinePlotInfo | string, settings: WebglLinePlotProps): WebglLinePlotInfo;
+    getChartSettings(plotId: string): WebglLinePlotProps;
     update(plotInfo: WebglLinePlotInfo | string, lines?: {
         [key: string]: WebglLineProps | number[] | {
             [key: string]: any;
