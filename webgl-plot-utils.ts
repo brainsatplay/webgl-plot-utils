@@ -110,6 +110,8 @@ export class WebglLinePlotUtil {
        
         this.plots[settings._id] = info;
 
+        console.log(settings);
+
         let i = 0;
         let nLines = Object.keys(settings.lines).length;
         settings.nLines = nLines;
@@ -150,7 +152,7 @@ export class WebglLinePlotUtil {
             s.line.arrangeX();
 
             //console.log(JSON.stringify(s.values));
-            if(s.values) {
+            if(s.values?.length === s.points) {
                 if(settings.overlay) {
                     let max = Math.max(...s.values);
                     let min = Math.min(...s.values);
@@ -169,7 +171,8 @@ export class WebglLinePlotUtil {
                         else s.values = [...new Array(s.points-s.values.length).fill(0), ...s.values];
                     }
                 }
-            } else s.values = new Array(points).fill(0);
+            } else if(Array.isArray(s.values)) s.values = [...new Array(points-s.values.length).fill(0),...s.values];
+            else s.values = new Array(s.points).fill(0);
             //console.log('before',JSON.stringify(s.values));
 
             if(!('autoscale' in s)) s.autoscale = true; 
@@ -256,8 +259,13 @@ export class WebglLinePlotUtil {
 
     //apply new settings e.g. color, width, nPoints, etc.
     reinitPlot(info:WebglLinePlotInfo|string, settings:WebglLinePlotProps) {
-        if(typeof info === 'string') info = this.plots[info];
+        if(typeof info === 'string') {
+            let str = info;
+            info = this.plots[info];
+            if(!settings._id) settings._id = str;
+        }
         if(!info.plot) return undefined;
+        
         info.plot.clear();
         info.plot.removeAllLines();
         if(info.settings.overlayCtx) info.settings.overlayCtx.clearRect(0,0,(info.settings.overlay as any)?.width,(info.settings.overlay as any)?.height)
