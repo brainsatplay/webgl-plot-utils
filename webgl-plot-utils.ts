@@ -46,7 +46,8 @@ export type WebglLinePlotProps = {
 export type WebglLinePlotInfo = {
     plot:WebglPlot,
     settings:WebglLinePlotProps, //settings, modified
-    initial:WebglLinePlotProps //original unmodified settings
+    initial:WebglLinePlotProps, //original unmodified settings
+    anim:any
 }
 
 export class WebglLinePlotUtil {
@@ -64,7 +65,6 @@ export class WebglLinePlotUtil {
         } else if(this.plots[settings._id]) {
             let oldsettings = this.plots[settings._id].settings;
             settings = Object.assign(oldsettings, settings);
-            
         }
 
 
@@ -99,7 +99,8 @@ export class WebglLinePlotUtil {
         let info:any = {
             plot,
             settings,
-            initial:Object.assign({},settings)
+            initial:Object.assign({},settings),
+            anim:()=>{ plot.update() } //run in requestAnimationFrame to throttle FPS
         };
        
         this.plots[settings._id] = info;
@@ -232,7 +233,8 @@ export class WebglLinePlotUtil {
         }
 
         //console.log(plot, this.plots[settings._id])
-        plot.update();
+        //plot.update();
+        requestAnimationFrame(info.anim);
 
         //console.log('init plot with settings', settings);
         return this.plots[settings._id];
@@ -255,6 +257,19 @@ export class WebglLinePlotUtil {
         info.plot.removeAllLines();
         if(info.settings.overlayCtx) info.settings.overlayCtx.clearRect(0,0,(info.settings.overlay as any)?.width,(info.settings.overlay as any)?.height)
         return this.initPlot(settings,info.plot);
+    }
+
+    getChartSettings(plotId:string) {
+        let info = this.plots[plotId];
+        if(info) {
+            let settings = Object.assign({},info.initial);
+
+            //remove any non jsonifiable stuff
+            delete settings.canvas;
+            delete settings.overlay;
+            delete settings.overlayCtx;
+            return info.initial;
+        } return undefined;
     }
 
     //pass the info object and the lines you want to update
@@ -344,7 +359,8 @@ export class WebglLinePlotUtil {
             }
         }
 
-        if(draw) plotInfo.plot.update(); //redraw
+        if(draw) //plotInfo.plot.update(); //redraw
+            requestAnimationFrame(plotInfo.anim);
         return true;
     }
     
