@@ -273,7 +273,7 @@ export class WebglLinePlotUtil {
             delete settings.canvas;
             delete settings.overlay;
             delete settings.overlayCtx;
-            console.log(settings);
+            //console.log(settings);
             return settings;
         } return undefined;
     }
