@@ -12,6 +12,7 @@ export type WebglLineProps = {
     width?:number, //use thick triangle strip lines instead, 6x slower!!
     interpolate?:boolean, //we can up or downsample data provided to update arrays, else we will use the end of the array for the slice (assuming you're pushing to an array and visualizing the incoming data)
     useOverlay?:boolean, //specify if you want this line to print, set false for overlapping lines to prevent printing on top of each other (for now)
+    viewing?:boolean, //are we rendering this line? reinit every time you want to change this setting
     [key:string]:any
 } & (
     { //define a fixed number of points
@@ -63,10 +64,9 @@ export class WebglLinePlotUtil {
         if(!settings._id) {
             settings._id = `plot${Math.floor(Math.random()*1000000000000000)}`;
         } else if(this.plots[settings._id]) {
-            let oldsettings = this.plots[settings._id].settings;
+            let oldsettings = this.plots[settings._id].initial;
             settings = Object.assign(oldsettings, settings);
         }
-
 
         if(settings.overlay) { //be sure to transfer this on workers
             if(typeof settings.overlay !== 'object') {
@@ -98,7 +98,13 @@ export class WebglLinePlotUtil {
 
         let initialLns = {};
         for(const key in settings.lines) {
-            initialLns[key] = Object.assign({},initialLns[key])
+            if(!Array.isArray(settings.lines[key])) {
+                initialLns[key] = Object.assign({},initialLns[key])
+                if(!('viewing' in settings.lines[key])) {
+                    (settings.lines[key] as any).viewing = true;
+                }
+                (initialLns[key] as any).viewing = (settings.lines[key] as any).viewing;
+            }
         }
 
         let info:any = {
@@ -111,10 +117,14 @@ export class WebglLinePlotUtil {
         this.plots[settings._id] = info;
         
         let i = 0;
-        let nLines = Object.keys(settings.lines).length;
+        let nLines = 0;
+        Object.keys(settings.lines).forEach((k) => {
+            if((settings.lines[k] as WebglLineProps)?.viewing !== false) {
+                nLines++;
+            }
+        });
         settings.nLines = nLines;
 
-        console.log(settings);
         for(const line in settings.lines) {
             let s = settings.lines[line] as any;
 
@@ -124,6 +134,8 @@ export class WebglLinePlotUtil {
                 };
                 settings.lines[line] = s;
             }
+
+            if(!('viewing' in s)) s.viewing = true;
 
             if(s.color) {
                 if(Array.isArray(s.color)) {
@@ -135,14 +147,19 @@ export class WebglLinePlotUtil {
             }
 
             let points;
-            if(s.nPoints)
+            if(s.nPoints) {
                 points = s.nPoints; 
-            else if(s.nSec && s.sps)
+            } else if(s.nSec && s.sps) {
                 points = Math.ceil(s.nSec*s.sps);
-            else if(s.values) points=s.values.length;
+            } else if(s.values) points=s.values.length;
+            else if(!points) points = 1000;
 
             if(!points) return;
             s.points = points;
+
+            if((settings.lines[line] as WebglLineProps).viewing === false) {
+                continue; //skip rest
+            }
 
             if(s.width) {
                 s.line = new WebglThickLine(s.color, points, s.width);
@@ -302,7 +319,12 @@ export class WebglLinePlotUtil {
         if(lines) {
             let regenerate = false;
             for(const line in lines) {
-                if(plotInfo.settings.lines[line] && (plotInfo.settings.lines[line] as any).line) {
+                if(
+                    plotInfo.settings.lines[line] && 
+                    (plotInfo.settings.lines[line] as any).line 
+                ) {
+                    if((plotInfo.settings.lines[line] as WebglLineProps)?.viewing === false) continue;
+                    
                     let s = plotInfo.settings.lines[line] as any;
                     let oldvalues = s.values;
                     if(Array.isArray(lines[line])) s.values = lines[line];

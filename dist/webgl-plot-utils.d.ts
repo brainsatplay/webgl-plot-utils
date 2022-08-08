@@ -10,6 +10,7 @@ export declare type WebglLineProps = {
     width?: number;
     interpolate?: boolean;
     useOverlay?: boolean;
+    viewing?: boolean;
     [key: string]: any;
 } & ({
     nPoints: number;
