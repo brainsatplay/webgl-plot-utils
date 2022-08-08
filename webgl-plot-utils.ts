@@ -104,6 +104,9 @@ export class WebglLinePlotUtil {
                     (settings.lines[key] as any).viewing = true;
                 }
                 (initialLns[key] as any).viewing = (settings.lines[key] as any).viewing;
+                (initialLns[key] as any).sps = (settings.lines[key] as any).sps;
+                (initialLns[key] as any).nSec = (settings.lines[key] as any).nSec;
+                (initialLns[key] as any).nPoints = (settings.lines[key] as any).nPoints;
             }
         }
 
