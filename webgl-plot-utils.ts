@@ -143,6 +143,7 @@ export class WebglLinePlotUtil {
                 }
             } else {
                 let rgb = WebglLinePlotUtil.HSLToRGB(360*(i/nLines)%360,100,50,1);
+                info.initial.lines[line].color = [...rgb,1];
                 s.color = new ColorRGBA(...rgb, 1);
             }
 
