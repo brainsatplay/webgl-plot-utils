@@ -334,16 +334,29 @@ export class WebglLinePlotUtil {
                     if(Array.isArray(lines[line])) s.values = lines[line];
                     else Object.assign(s,lines[line]);
                     if(s.values) {
-                        if(plotInfo.settings.overlay) {
-                            let max = Math.max(...s.values);
-                            let min = Math.min(...s.values);
-                            s.ymin = min;
-                            s.ymax = max;
-                            let abs = Math.abs(s.ymin);
-                            s.absmax = abs > s.ymax ? abs : s.ymax;
+                        if(plotInfo.settings.overlay || s.autoscale) {
+                            if (s.values.length > 1) {
+                                let max = Math.max(...s.values);
+                                let min = Math.min(...s.values);
+                                s.ymin = min;
+                                s.ymax = max;
+                                let abs = Math.abs(s.ymin);
+                                s.absmax = abs > s.ymax ? abs : s.ymax;
+                            } else {
+                                if(!('ymax' in s) || s.values[0] > s.ymax) {
+                                    s.ymax = s.values[0];
+                                    let abs = Math.abs(s.ymin);
+                                    s.absmax = abs > s.ymax ? abs : s.ymax;
+                                }
+                                else if(!('ymin' in s) || s.values[0] < s.ymin) {
+                                    s.ymin = s.values[0];
+                                    let abs = Math.abs(s.ymin);
+                                    s.absmax = abs > s.ymax ? abs : s.ymax;
+                                }
+                            }
                         }
                         if(s.autoscale) {
-                            s.values = WebglLinePlotUtil.autoscale(s.values, s.position, plotInfo.settings.nLines, s.centerZero);
+                            s.values = WebglLinePlotUtil.autoscale(s.values, s.position, plotInfo.settings.nLines, s.centerZero, s.ymin, s.ymax);
                         }
                         if(s.values.length !== s.points) {
                             if(s.interpolate) {
@@ -357,6 +370,7 @@ export class WebglLinePlotUtil {
                                 else s.values = [...oldvalues.slice(s.values.length), ...s.values]; //circular buffer
                             }
                         }
+                        //console.log(s);
                         s.values.forEach((y,i) => { 
                             if(!s.autoscale && s.absmax > 1){
                                 s.line.setY(i,y/s.absmax)
@@ -443,10 +457,10 @@ export class WebglLinePlotUtil {
     }
 
     //autoscale array to -1 and 1
-    static autoscale(array, lineIdx=0, nLines=1, centerZero=false) {
+    static autoscale(array, lineIdx=0, nLines=1, centerZero=false, ymin?:number,ymax?:number) {
         if(array?.length === 0 ) return array;
-        let max = Math.max(...array)
-        let min = Math.min(...array);
+        let max = ymax ? ymax : Math.max(...array)
+        let min = ymin ? ymin : Math.min(...array);
 
         let _lines = 1/nLines;
         let scalar = 1;
