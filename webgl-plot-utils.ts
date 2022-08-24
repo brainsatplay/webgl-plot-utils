@@ -379,7 +379,7 @@ export class WebglLinePlotUtil {
                         });
                     }
                 }
-                else if(plotInfo.settings.generateNewLines) {
+                else if(plotInfo.settings.generateNewLines && !line.includes('timestamp')) { //we'll ignore timestamps since we often pass multiple competing objects in
                     if(Array.isArray(lines[line])) {
                         lines[line] = {values: lines[line] as number[]};
                     }
