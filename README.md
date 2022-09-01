@@ -12,6 +12,7 @@ Incl thicc (triangle strip) lines, autoscaling for stacking, auto-interpolation 
 type WebglLineProps = {
     values?:number[],
     color?:[number,number,number,number]|ColorRGBA,  
+    units?:string //overlay can display units for us
     position?:number, //stack position? default is the order you define the lines in this object or you can have them overlap
     autoscale?:boolean, //autoscale the data to -1 and 1 and stack, default true so you can just pass whatever
     centerZero?:boolean, //center the line at zero (if autoscaling), i.e. the positive and negative axis get the same amount of space, default false

@@ -4,14 +4,20 @@ import {WebglLine, WebglThickLine, WebglPlot, ColorRGBA} from 'webgl-plot'
 export type WebglLineProps = {
     values?:number[],
     color?:[number,number,number,number]|ColorRGBA,  
+
     position?:number, //stack position? default is the order you define the lines in this object or you can have them overlap
     autoscale?:boolean, //autoscale the data to -1 and 1 and stack, default true so you can just pass whatever
+    scaled?:number[], //rescaled values (same as values if autoscale is false)
+    ymin?:number, //min y to scale based on? sets bottom of line visible
+    ymax?:number, //max y to scale based on? sets top of line visible
+
     centerZero?:boolean, //center the line at zero (if autoscaling), i.e. the positive and negative axis get the same amount of space, default false
     xAxis?:boolean, //draw an xaxis, default true
     xColor?:[number,number,number,number]|ColorRGBA, //default gray and transparent
     width?:number, //use thick triangle strip lines instead, 6x slower!!
     interpolate?:boolean, //we can up or downsample data provided to update arrays, else we will use the end of the array for the slice (assuming you're pushing to an array and visualizing the incoming data)
     useOverlay?:boolean, //specify if you want this line to print, set false for overlapping lines to prevent printing on top of each other (for now)
+    units?:string, //units to appear on overlay
     viewing?:boolean, //are we rendering this line? reinit every time you want to change this setting
     [key:string]:any
 } & (
@@ -107,6 +113,9 @@ export class WebglLinePlotUtil {
                 (initialLns[key] as any).sps = (settings.lines[key] as any).sps;
                 (initialLns[key] as any).nSec = (settings.lines[key] as any).nSec;
                 (initialLns[key] as any).nPoints = (settings.lines[key] as any).nPoints;
+                (initialLns[key] as any).ymin = (settings.lines[key] as any).ymin;
+                (initialLns[key] as any).ymax = (settings.lines[key] as any).ymax;
+                (initialLns[key] as any).units = (settings.lines[key] as any).units;
             }
         }
 
@@ -174,14 +183,21 @@ export class WebglLinePlotUtil {
 
             //console.log(JSON.stringify(s.values));
             if(s.values?.length === s.points) {
-                if(settings.overlay) {
+                if(!('ymax' in s)) {
                     let max = Math.max(...s.values);
                     let min = Math.min(...s.values);
                     s.ymin = min;
                     s.ymax = max;
-                    let abs = Math.abs(s.ymin);
-                    s.absmax = abs > s.ymax ? abs : s.ymax;
+                } else if(!('ymin' in s)) {
+                    if(s.ymax < 0) {
+                        s.ymin = s.ymax*2;
+                    }
+                    else s.ymin = 0;
                 }
+                let abs = Math.abs(s.ymin);
+                s.absmax = abs > s.ymax ? abs : s.ymax;
+
+
                 if(s.values.length !== points) {
                     if(s.interpolate) {
                         if(s.values.length > points) {
@@ -196,17 +212,21 @@ export class WebglLinePlotUtil {
                 }
             } else if(Array.isArray(s.values)) s.values = [...new Array(points-s.values.length).fill(0),...s.values];
             else s.values = new Array(s.points).fill(0);
+            if(isNaN(s.ymax)) { s.ymax = s.values[0] === 0 ? 1 : s.values[0];  }
+            if(isNaN(s.ymin)) { s.ymin = s.ymax < 0 ? s.ymax : 0; }
             //console.log('before',JSON.stringify(s.values));
 
             if(!('autoscale' in s)) s.autoscale = true; 
             if(s.points > 5000) s.autoscale = false; //limit call stack
             if(!s.position) s.position = settings.nLines - i - 1;
             if(s.autoscale) {
-                s.values = WebglLinePlotUtil.autoscale(s.values, s.position ? s.position : i, nLines, s.centerZero);
-            }
+                if(!('clamp' in s)) s.clamp = true;
+                s.scaled = WebglLinePlotUtil.autoscale(s.values, s.position ? s.position : i, nLines, s.centerZero, s.ymin, s.ymax, s.clamp);
+            } else s.scaled = s.values;
+
             //console.log('after',JSON.stringify(s.values));
 
-            s.values.forEach((y,i) => s.line.setY(i,y));
+            s.scaled.forEach((y,i) => s.line.setY(i,y));
 
             plot.addDataLine(s.line);
 
@@ -258,8 +278,8 @@ export class WebglLinePlotUtil {
                 if(s.useOverlay || !('useOverlay' in s)) {
                     let pos = settings.nLines - s.position - 1;
                     ctx.fillText(line, 20,canvas.height*(pos as number + 0.1)/settings.nLines);
-                    ctx.fillText(s.ymax, canvas.width - 70,canvas.height*(pos as number + 0.1)/settings.nLines);
-                    ctx.fillText(s.ymin, canvas.width - 70,canvas.height*(pos as number + 0.9)/settings.nLines);
+                    ctx.fillText(`${Math.floor(s.ymax) === s.ymax ? s.ymax : s.ymax.toFixed(5)} ${s.units ? s.units : ''}`, canvas.width - 70,canvas.height*(pos as number + 0.1)/settings.nLines);
+                    ctx.fillText(`${Math.floor(s.ymin) === s.ymin ? s.ymin : s.ymin.toFixed(5)} ${s.units ? s.units : ''}`, canvas.width - 70,canvas.height*(pos as number + 0.9)/settings.nLines);
                 }
             }
         }
@@ -296,10 +316,19 @@ export class WebglLinePlotUtil {
         return this.initPlot(settings,info.plot);
     }
 
-    getChartSettings(plotId:string) {
+    getChartSettings(plotId:string, getValues?:boolean) {
         let info = this.plots[plotId];
         if(info) {
-            let settings = Object.assign({},info.initial);
+            let settings = JSON.parse(JSON.stringify(info.initial));
+            for(const l in info.initial.lines) {
+                if(typeof (info.initial.lines[l] as any)?.ymax !== 'number') {
+                    (settings.lines[l] as any).ymax = (info.settings.lines[l] as any)?.ymax;
+                }  
+                if(typeof (info.initial.lines[l] as any)?.ymin !== 'number') {
+                    (settings.lines[l] as any).ymin = (info.settings.lines[l] as any)?.ymin;
+                }
+                if(getValues) settings.lines[l].values = info.settings.lines[l].values;
+            }
 
             //remove any non jsonifiable stuff
             delete settings.canvas;
@@ -330,48 +359,69 @@ export class WebglLinePlotUtil {
                     if((plotInfo.settings.lines[line] as WebglLineProps)?.viewing === false) continue;
                     
                     let s = plotInfo.settings.lines[line] as any;
-                    let oldvalues = s.values;
-                    if(Array.isArray(lines[line])) s.values = lines[line];
-                    else Object.assign(s,lines[line]);
+                    
+                    if(Array.isArray(lines[line])) {
+                        WebglLinePlotUtil.circularBuffer(s.values,lines[line] as number[])
+                        //console.log(lines[line],s.values)
+                    }
+                    else if (typeof lines[line] === 'number') {
+                        s.values.push(lines[line]);
+                        s.values.shift();
+                    } else if(lines[line]?.values) {
+                        WebglLinePlotUtil.circularBuffer(s.values, lines[line].values as number[])
+                    }
+
                     if(s.values) {
-                        if(plotInfo.settings.overlay || s.autoscale) {
-                            if (s.values.length > 1) {
-                                let max = Math.max(...s.values);
-                                let min = Math.min(...s.values);
-                                s.ymin = min;
-                                s.ymax = max;
-                                let abs = Math.abs(s.ymin);
-                                s.absmax = abs > s.ymax ? abs : s.ymax;
-                            } else {
-                                if(!('ymax' in s) || s.values[0] > s.ymax) {
-                                    s.ymax = s.values[0];
-                                    let abs = Math.abs(s.ymin);
-                                    s.absmax = abs > s.ymax ? abs : s.ymax;
-                                }
-                                else if(!('ymin' in s) || s.values[0] < s.ymin) {
-                                    s.ymin = s.values[0];
-                                    let abs = Math.abs(s.ymin);
-                                    s.absmax = abs > s.ymax ? abs : s.ymax;
-                                }
+                        if(isNaN(s.ymax)) { s.ymax = s.values[0] === 0 ? 1 : s.values[0];  }
+                        if(isNaN(s.ymin)) { s.ymin = s.ymax < 0 ? s.ymax : 0; }
+
+                        if(!(typeof (plotInfo.initial.lines[line] as any)?.ymin === 'number') && 
+                            (plotInfo.settings.overlay || s.autoscale)
+                        ) { 
+                            let max = Math.max(...s.values, s.ymax);
+                            let min = Math.min(...s.values, s.ymin);
+                            s.ymin = min;
+                            s.ymax = max;
+                            let abs = Math.abs(s.ymin);
+                            s.absmax = abs > s.ymax ? abs : s.ymax;
+                        } else if(typeof s.ymax === 'number') {
+                            if(typeof s.ymin !== 'number') {
+                                s.ymin = 0;
                             }
-                        }
+                            if(s.ymin > s.ymax) {
+                                let max = s.ymin;
+                                s.ymin = s.ymax;
+                                s.ymax = max; //swap
+                            }
+                        } 
+
                         if(s.autoscale) {
-                            s.values = WebglLinePlotUtil.autoscale(s.values, s.position, plotInfo.settings.nLines, s.centerZero, s.ymin, s.ymax);
-                        }
-                        if(s.values.length !== s.points) {
+                            s.scaled = WebglLinePlotUtil.autoscale(
+                                s.values, 
+                                s.position, 
+                                plotInfo.settings.nLines, 
+                                s.centerZero, 
+                                s.ymin, 
+                                s.ymax,
+                                s.clamp
+                            );
+                        } else s.scaled = s.values;
+                        if(s.scaled.length !== s.points) {
                             if(s.interpolate) {
                                 if(s.values.length > s.points) {
-                                    s.values = WebglLinePlotUtil.downsample(s.values, s.points);
-                                } else if (s.values.length < s.points) {
-                                    s.values = WebglLinePlotUtil.upsample(s.values, s.points);
+                                    s.scaled = WebglLinePlotUtil.downsample(s.scaled, s.points);
+                                } else if (s.scaled.length < s.points) {
+                                    s.scaled = WebglLinePlotUtil.upsample(s.scaled, s.points);
                                 }
                             } else {
-                                if(s.values.length > s.points) s.values = s.values.slice(s.values.length-s.points);
-                                else s.values = [...oldvalues.slice(s.values.length), ...s.values]; //circular buffer
+                                if(s.scaled.length > s.points) 
+                                    s.scaled.splice(0,s.scaled.length-s.points);
+                                else 
+                                    s.scaled = new Array(s.points).fill(0).splice(s.points-s.scaled.length,0,s.scaled);
                             }
                         }
                         //console.log(s);
-                        s.values.forEach((y,i) => { 
+                        s.scaled.forEach((y,i) => { 
                             if(!s.autoscale && s.absmax > 1){
                                 s.line.setY(i,y/s.absmax)
                             }
@@ -415,8 +465,8 @@ export class WebglLinePlotUtil {
                 if(s.useOverlay || !('useOverlay' in s)) {
                     let pos = plotInfo.settings.nLines - s.position - 1;
                     ctx.fillText(line, 20,canvas.height*(pos as number + 0.1)/plotInfo.settings.nLines);
-                    ctx.fillText(s.ymax, canvas.width - 70,canvas.height*(pos as number + 0.1)/plotInfo.settings.nLines);
-                    ctx.fillText(s.ymin, canvas.width - 70,canvas.height*(pos as number + 0.9)/plotInfo.settings.nLines);
+                    ctx.fillText(`${Math.floor(s.ymax) === s.ymax ? s.ymax : s.ymax.toFixed(5)} ${s.units ? s.units : ''}`, canvas.width - 70,canvas.height*(pos as number + 0.1)/plotInfo.settings.nLines);
+                    ctx.fillText(`${Math.floor(s.ymin) === s.ymin ? s.ymin : s.ymin.toFixed(5)} ${s.units ? s.units : ''}`, canvas.width - 70,canvas.height*(pos as number + 0.9)/plotInfo.settings.nLines);
                 }
             }
         }
@@ -457,26 +507,50 @@ export class WebglLinePlotUtil {
     }
 
     //autoscale array to -1 and 1
-    static autoscale(array, lineIdx=0, nLines=1, centerZero=false, ymin?:number,ymax?:number) {
+    static autoscale(
+        array, 
+        lineIdx=0, 
+        nLines=1, 
+        centerZero=false, 
+        ymin?:number,
+        ymax?:number,
+        clamp?:boolean //clamp values to within their line segment (that is, no overlapping other lines)
+    ) {
         if(array?.length === 0 ) return array;
-        let max = ymax ? ymax : Math.max(...array)
+        let max = ymax ? ymax : Math.max(...array);
         let min = ymin ? ymin : Math.min(...array);
+
+        //console.log(max,min)
 
         let _lines = 1/nLines;
         let scalar = 1;
         if(centerZero) {
             let absmax = Math.max(Math.abs(min),Math.abs(max));
             if(absmax !== 0) scalar = _lines/absmax;
-            return array.map(y => (y*scalar+(_lines*(lineIdx+1)*2-1-_lines))); //scaled array
+            return array.map(y => {
+                if(clamp) {
+                    if(y < min) y = min;
+                    if(y > max) y = max; //clamp
+                }
+                return (y*scalar+(_lines*(lineIdx+1)*2-1-_lines))
+            }); //scaled array
         }
         else {
             if(max === min) {
                 if(max !== 0) {
                     scalar = _lines/max;
+                } else if (min !== 0) {
+                    scalar = _lines/Math.abs(min);
                 }
             }
             else scalar = _lines/(max-min);
-            return array.map(y => (2*((y-min)*scalar-(1/(2*nLines)))+(_lines*(lineIdx+1)*2-1-_lines))); //scaled array
+            return array.map(y => {
+                if(clamp) {
+                    if(y < min) y = min;
+                    if(y > max) y = max; //clamp
+                }
+                return (2*((y-min)*scalar-(1/(2*nLines)))+(_lines*(lineIdx+1)*2-1-_lines))
+            }); //scaled array
         }
     }
 
@@ -573,23 +647,26 @@ export class WebglLinePlotUtil {
 
     //push new entries to end of array and roll over starting entries with a set array length
     static circularBuffer(arr:any[],newEntries:any[]) {
-        if(newEntries.length < arr.length)
+        if(newEntries.length < arr.length) {
+            let slice = arr.slice(newEntries.length);
+            let len = arr.length;
             arr.splice(
                 0,
-                arr.length-newEntries.length,
-                ...arr.slice(newEntries.length)
-            ).splice(
-                    newEntries.length,
-                    arr.length,
-                    ...newEntries
-                );
+                len,
+                ...slice,...newEntries
+            );
+        }
         else if (newEntries.length > arr.length) {
-            arr.splice(0,arr.length,newEntries.slice(newEntries.length-arr.length));
+            let len = arr.length;
+            arr.splice(
+                0,
+                len,
+                newEntries.slice(len-newEntries.length)
+            );
         }
         else { 
             arr.splice(0,arr.length,...newEntries);
         }
-        
         return arr;
     }
 

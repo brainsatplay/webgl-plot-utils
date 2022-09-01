@@ -4,12 +4,16 @@ export declare type WebglLineProps = {
     color?: [number, number, number, number] | ColorRGBA;
     position?: number;
     autoscale?: boolean;
+    scaled?: number[];
+    ymin?: number;
+    ymax?: number;
     centerZero?: boolean;
     xAxis?: boolean;
     xColor?: [number, number, number, number] | ColorRGBA;
     width?: number;
     interpolate?: boolean;
     useOverlay?: boolean;
+    units?: string;
     viewing?: boolean;
     [key: string]: any;
 } & ({
@@ -52,7 +56,7 @@ export declare class WebglLinePlotUtil {
     initPlot(settings: WebglLinePlotProps, plot?: WebglPlot): WebglLinePlotInfo;
     deinitPlot(info: WebglLinePlotInfo | string): boolean;
     reinitPlot(info: WebglLinePlotInfo | string, settings: WebglLinePlotProps): WebglLinePlotInfo;
-    getChartSettings(plotId: string): WebglLinePlotProps;
+    getChartSettings(plotId: string, getValues?: boolean): any;
     update(plotInfo: WebglLinePlotInfo | string, lines?: {
         [key: string]: WebglLineProps | number[] | {
             [key: string]: any;
@@ -60,7 +64,7 @@ export declare class WebglLinePlotUtil {
         };
     }, draw?: boolean): boolean;
     updateLine(line: WebglLine | WebglThickLine, values: number[], interpolate?: boolean, autoscale?: boolean, autoscalePosition?: number, nLines?: number, centerZero?: boolean): boolean;
-    static autoscale(array: any, lineIdx?: number, nLines?: number, centerZero?: boolean, ymin?: number, ymax?: number): any;
+    static autoscale(array: any, lineIdx?: number, nLines?: number, centerZero?: boolean, ymin?: number, ymax?: number, clamp?: boolean): any;
     static absmax(array: any): number;
     static downsample(array: any, fitCount: any, scalar?: number): any;
     static upsample(array: any, fitCount: any, scalar?: number): any[];
