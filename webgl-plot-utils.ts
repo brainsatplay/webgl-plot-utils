@@ -708,23 +708,45 @@ export class WebglLinePlotUtil {
         }
         else if (typeof data === 'string') { //let's parse different string formats 
             let split:any;
-            if(data.includes('\t')) {
+            if(data.includes('\r\n')) { 
+                let lines = data.split('\r\n');
+                data = {};
+                lines.forEach((l,j) => {
+                    if(l.includes('\t')) {
+                        split = l.split('\t');
+                    } else if (l.includes(',')) {
+                        split = l.split(',');
+                    } else if (l.includes('|')) {
+                        split = l.split('|');
+                    }
+                    if(split) split.forEach((val,i) => {
+                        if(val.includes(':')) {
+                            let [key,v] = val.split(':');
+                            let fl = parseFloat(v);
+                            if(!isNaN(fl)) data[key] = [fl];
+                        } else {
+                            let fl = parseFloat(val);
+                            if(!isNaN(fl)) data[i] = [fl];
+                        }
+                    });
+                })
+            } else if(data.includes('\t')) {
                 split = data.split('\t');
             } else if (data.includes(',')) {
                 split = data.split(',');
-            } 
+            } else if (data.includes('|')) {
+                split = data.split('|');
+            }
             data = {};
             if(split) {
                 split.forEach((val,i) => {
                     if(val.includes(':')) {
                         let [key,v] = val.split(':');
                         let fl = parseFloat(v);
-                        if(fl) data[key] = [fl];
-                        else return undefined;
+                        if(!isNaN(fl)) data[key] = [fl];
                     } else {
                         let fl = parseFloat(val);
-                        if(fl) data[i] = [fl];
-                        else return undefined;
+                        if(!isNaN(fl)) data[i] = [fl];
                     }
                 });
             }
