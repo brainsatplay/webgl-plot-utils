@@ -126,4 +126,4 @@ anim();
 plotter.reinitPlot(plotInfo,{_id:plotInfo.settings._id, lines} as any); //
 ```
 
-Reinitialize the plot at any time with new line settings etc. Plots with generateNewLines set to true can detect lines added, and if cleanGeneration is false it can keep adding more lines and keep the originals e.g. for asynchronous data updates from different sources to a single graph
+Reinitialize the plot at any time with new line settings etc. Plots with generateNewLines set to true can detect lines added when calling `update` after first initialization, and if cleanGeneration is false it can keep adding more lines and keep the originals e.g. for asynchronous data updates from different sources to a single graph
