@@ -56,7 +56,7 @@ export declare class WebglLinePlotUtil {
     initPlot(settings: WebglLinePlotProps, plot?: WebglPlot): WebglLinePlotInfo;
     deinitPlot(info: WebglLinePlotInfo | string): boolean;
     reinitPlot(info: WebglLinePlotInfo | string, settings: WebglLinePlotProps): WebglLinePlotInfo;
-    getChartSettings(plotId: string, getValues?: boolean): any;
+    getChartSettings(plotId: string, getValues?: boolean): WebglLinePlotProps;
     update(plotInfo: WebglLinePlotInfo | string, lines?: {
         [key: string]: WebglLineProps | number[] | {
             [key: string]: any;

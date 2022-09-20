@@ -319,7 +319,8 @@ export class WebglLinePlotUtil {
     getChartSettings(plotId:string, getValues?:boolean) {
         let info = this.plots[plotId];
         if(info) {
-            let settings = JSON.parse(JSON.stringify(info.initial));
+
+            let settings = Object.assign({},info.initial);
             for(const l in info.initial.lines) {
                 if(typeof (info.initial.lines[l] as any)?.ymax !== 'number') {
                     (settings.lines[l] as any).ymax = (info.settings.lines[l] as any)?.ymax;
