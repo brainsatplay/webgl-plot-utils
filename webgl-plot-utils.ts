@@ -71,6 +71,12 @@ export class WebglLinePlotUtil {
             settings._id = `plot${Math.floor(Math.random()*1000000000000000)}`;
         } else if(this.plots[settings._id]) {
             let oldsettings = this.plots[settings._id].initial;
+            if(settings.lines) for(const key in settings.lines) {
+                if(oldsettings.lines[key] && Array.isArray(settings.lines[key])) {
+                    let newdata = settings.lines[key];
+                    settings.lines[key] = oldsettings.lines[key];
+                }
+            }
             settings = Object.assign(oldsettings, settings);
         }
 
@@ -102,21 +108,21 @@ export class WebglLinePlotUtil {
             }
         }
 
+        if(settings.lines?.timestamp) delete settings.lines.timestamp;
+
         let initialLns = {};
         for(const key in settings.lines) {
-            if(!Array.isArray(settings.lines[key])) {
-                initialLns[key] = Object.assign({},initialLns[key])
-                if(!('viewing' in settings.lines[key])) {
-                    (settings.lines[key] as any).viewing = true;
-                }
-                (initialLns[key] as any).viewing = (settings.lines[key] as any).viewing;
-                (initialLns[key] as any).sps = (settings.lines[key] as any).sps;
-                (initialLns[key] as any).nSec = (settings.lines[key] as any).nSec;
-                (initialLns[key] as any).nPoints = (settings.lines[key] as any).nPoints;
-                (initialLns[key] as any).ymin = (settings.lines[key] as any).ymin;
-                (initialLns[key] as any).ymax = (settings.lines[key] as any).ymax;
-                (initialLns[key] as any).units = (settings.lines[key] as any).units;
+            initialLns[key] = Object.assign({},initialLns[key])
+            if(!('viewing' in settings.lines[key])) {
+                (settings.lines[key] as any).viewing = true;
             }
+            (initialLns[key] as any).viewing = (settings.lines[key] as any).viewing;
+            (initialLns[key] as any).sps = (settings.lines[key] as any).sps;
+            (initialLns[key] as any).nSec = (settings.lines[key] as any).nSec;
+            (initialLns[key] as any).nPoints = (settings.lines[key] as any).nPoints;
+            (initialLns[key] as any).ymin = (settings.lines[key] as any).ymin;
+            (initialLns[key] as any).ymax = (settings.lines[key] as any).ymax;
+            (initialLns[key] as any).units = (settings.lines[key] as any).units;
         }
 
         let info:any = {
@@ -136,6 +142,8 @@ export class WebglLinePlotUtil {
             }
         });
         settings.nLines = nLines;
+
+        //console.log(settings.lines)
 
         for(const line in settings.lines) {
             let s = settings.lines[line] as any;
@@ -160,10 +168,10 @@ export class WebglLinePlotUtil {
             }
 
             let points;
-            if(s.nPoints) {
-                points = s.nPoints; 
-            } else if(s.nSec && s.sps) {
+            if(s.nSec && s.sps) {
                 points = Math.ceil(s.nSec*s.sps);
+            } else if(s.nPoints) {
+                points = s.nPoints; 
             } else if(s.values) points=s.values.length;
             else if(!points) points = 1000;
 
@@ -278,8 +286,8 @@ export class WebglLinePlotUtil {
                 if(s.useOverlay || !('useOverlay' in s)) {
                     let pos = settings.nLines - s.position - 1;
                     ctx.fillText(line, 20,canvas.height*(pos as number + 0.1)/settings.nLines);
-                    ctx.fillText(`${Math.floor(s.ymax) === s.ymax ? s.ymax : s.ymax.toFixed(5)} ${s.units ? s.units : ''}`, canvas.width - 70,canvas.height*(pos as number + 0.1)/settings.nLines);
-                    ctx.fillText(`${Math.floor(s.ymin) === s.ymin ? s.ymin : s.ymin.toFixed(5)} ${s.units ? s.units : ''}`, canvas.width - 70,canvas.height*(pos as number + 0.9)/settings.nLines);
+                    ctx.fillText(`${Math.floor(s.ymax) === s.ymax ? s.ymax : s.ymax?.toFixed(5)} ${s.units ? s.units : ''}`, canvas.width - 70,canvas.height*(pos as number + 0.1)/settings.nLines);
+                    ctx.fillText(`${Math.floor(s.ymin) === s.ymin ? s.ymin : s.ymin?.toFixed(5)} ${s.units ? s.units : ''}`, canvas.width - 70,canvas.height*(pos as number + 0.9)/settings.nLines);
                 }
             }
         }
@@ -466,8 +474,8 @@ export class WebglLinePlotUtil {
                 if(s.useOverlay || !('useOverlay' in s)) {
                     let pos = plotInfo.settings.nLines - s.position - 1;
                     ctx.fillText(line, 20,canvas.height*(pos as number + 0.1)/plotInfo.settings.nLines);
-                    ctx.fillText(`${Math.floor(s.ymax) === s.ymax ? s.ymax : s.ymax.toFixed(5)} ${s.units ? s.units : ''}`, canvas.width - 70,canvas.height*(pos as number + 0.1)/plotInfo.settings.nLines);
-                    ctx.fillText(`${Math.floor(s.ymin) === s.ymin ? s.ymin : s.ymin.toFixed(5)} ${s.units ? s.units : ''}`, canvas.width - 70,canvas.height*(pos as number + 0.9)/plotInfo.settings.nLines);
+                    ctx.fillText(`${Math.floor(s.ymax) === s.ymax ? s.ymax : s.ymax?.toFixed(5)} ${s.units ? s.units : ''}`, canvas.width - 70,canvas.height*(pos as number + 0.1)/plotInfo.settings.nLines);
+                    ctx.fillText(`${Math.floor(s.ymin) === s.ymin ? s.ymin : s.ymin?.toFixed(5)} ${s.units ? s.units : ''}`, canvas.width - 70,canvas.height*(pos as number + 0.9)/plotInfo.settings.nLines);
                 }
             }
         }
