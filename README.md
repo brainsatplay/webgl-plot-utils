@@ -17,7 +17,7 @@ type WebglLineProps = {
     color?:[number,number,number,number]|ColorRGBA,  
 
     position?:number, //stack position? default is the order you define the lines in this object or you can have them overlap
-    autoscale?:boolean, //autoscale the data to -1 and 1 and stack, default true so you can just pass whatever
+    autoscale?:boolean|2, //autoscale the data to -1 and 1 and stack, default true so you can just pass whatever, setting 2 allows for clamping but is slower (CPU based)
     scaled?:number[], //rescaled values (same as values if autoscale is false)
     ymin?:number, //min y to scale based on? sets bottom of line visible
     ymax?:number, //max y to scale based on? sets top of line visible

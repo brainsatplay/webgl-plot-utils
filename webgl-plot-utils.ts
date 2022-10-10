@@ -7,7 +7,7 @@ export type WebglLineProps = {
     color?:[number,number,number,number]|ColorRGBA,  
 
     position?:number, //stack position? default is the order you define the lines in this object or you can have them overlap
-    autoscale?:boolean, //autoscale the data to -1 and 1 and stack, default true so you can just pass whatever
+    autoscale?:boolean|2, //autoscale the data to -1 and 1 and stack, default true so you can just pass whatever, setting 2 allows for clamping but is slower (CPU based)
     scaled?:number[], //rescaled values (same as values if autoscale is false)
     ymin?:number, //min y to scale based on? sets bottom of line visible
     ymax?:number, //max y to scale based on? sets top of line visible
@@ -224,12 +224,12 @@ export class WebglLinePlotUtil {
             //console.log('before',JSON.stringify(s.values));
 
             if(isNaN(s.ymax)) { 
-                if(!isNaN(s.ymin)) s.ymax = s.values.length <= 100000 ? Math.max(...s.values) : 1;
+                if(!isNaN(s.ymin)) s.ymax = s.values.length <= 100000 ? Math.max(...s.values) : 0;
                 else s.ymax = 0; 
             }
             if(isNaN(s.ymin)) {
-                if(!isNaN(s.ymax)) s.ymin = s.values.length <= 100000 ? Math.min(...s.values) : 1;
-                s.ymin = 0; 
+                if(!isNaN(s.ymax)) s.ymin = s.values.length <= 100000 ? Math.min(...s.values) : 0;
+                else s.ymin = 0; 
             }
 
             let min = s.ymin;
@@ -452,12 +452,12 @@ export class WebglLinePlotUtil {
 
                     if(s.values) {
                         if(isNaN(s.ymax)) { 
-                            if(!isNaN(s.ymin)) s.ymax = s.values.length <= 100000 ? Math.max(...s.values) : 1;
+                            if(!isNaN(s.ymin)) s.ymax = s.values.length <= 100000 ? Math.max(...s.values) : 0;
                             else s.ymax = 0; 
                         }
                         if(isNaN(s.ymin)) {
-                            if(!isNaN(s.ymax)) s.ymin = s.values.length <= 100000 ? Math.min(...s.values) : 1;
-                            s.ymin = 0; 
+                            if(!isNaN(s.ymax)) s.ymin = s.values.length <= 100000 ? Math.min(...s.values) : 0;
+                            else s.ymin = 0; 
                         }
 
                         let min = s.ymin;

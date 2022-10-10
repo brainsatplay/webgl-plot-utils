@@ -3,7 +3,7 @@ export declare type WebglLineProps = {
     values?: number[];
     color?: [number, number, number, number] | ColorRGBA;
     position?: number;
-    autoscale?: boolean;
+    autoscale?: boolean | 2;
     scaled?: number[];
     ymin?: number;
     ymax?: number;
