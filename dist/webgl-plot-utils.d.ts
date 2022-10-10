@@ -68,7 +68,7 @@ export declare class WebglLinePlotUtil {
     updateLine(line: WebglLine | WebglThickLine, values: number[], interpolate?: boolean, autoscale?: boolean, autoscalePosition?: number, nLines?: number, centerZero?: boolean): boolean;
     static autoscale(array: any, lineIdx?: number, nLines?: number, centerZero?: boolean, ymin?: number, ymax?: number, clamp?: boolean): any;
     static getYScalar(array: any, nLines?: number, centerZero?: boolean, ymin?: number, ymax?: number): any;
-    static getYOffset(lineIdx?: number, nLines?: number): number;
+    static getYOffset(lineIdx?: number, nLines?: number, min?: number, scalar?: number): number;
     static absmax(array: any): number;
     static downsample(array: any, fitCount: any, scalar?: number): any;
     static upsample(array: any, fitCount: any, scalar?: number): any[];
