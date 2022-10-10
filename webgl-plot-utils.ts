@@ -1,8 +1,9 @@
 
-import {WebglLine, WebglThickLine, WebglPlot, ColorRGBA} from 'webgl-plot'
+import {WebglLine, WebglThickLine, WebglPlot, ColorRGBA, WebglSquare} from 'webgl-plot'
 
+//provide to initPlot lines settings 
 export type WebglLineProps = {
-    values?:number[],
+    values?:number[]
     color?:[number,number,number,number]|ColorRGBA,  
 
     position?:number, //stack position? default is the order you define the lines in this object or you can have them overlap
@@ -20,12 +21,11 @@ export type WebglLineProps = {
     units?:string, //units to appear on overlay
     viewing?:boolean, //are we rendering this line? reinit every time you want to change this setting
     [key:string]:any
-} & (
-    { //define a fixed number of points
-        nPoints:number
+} & ({ //define a fixed number of points
+        nPoints?:number
     }|{ //or define by number of seconds + samplerate
-        nSec:number, 
-        sps:number
+        nSec?:number, 
+        sps?:number
     })
 
 export type WebglLinePlotProps = {
@@ -41,6 +41,8 @@ export type WebglLinePlotProps = {
         debug?:boolean
     },
     overlay?:HTMLCanvasElement|boolean, //automatically print the max and min values of the stacked lines
+    overlayColor?:string, //overlay canvas fillStyle string
+    overlayFont?:string,  //overlay canvas font string
     lines:{
         [key:string]:WebglLineProps|number[]
     },
@@ -145,6 +147,17 @@ export class WebglLinePlotUtil {
 
         //console.log(settings.lines)
 
+        let canvas;
+        let ctx;
+
+        if(typeof settings.overlay === 'object') {
+            canvas = settings.overlay;
+            ctx = settings.overlayCtx as CanvasRenderingContext2D;
+            ctx.clearRect(0,0,settings.overlay.width,settings.overlay.height);
+            ctx.font = settings.overlayFont ? settings.overlayFont : '1vw Courier';
+            ctx.fillStyle = settings.overlayColor ? settings.overlayColor : 'white';
+        }
+
         for(const line in settings.lines) {
             let s = settings.lines[line] as any;
 
@@ -184,28 +197,16 @@ export class WebglLinePlotUtil {
 
             if(s.width) {
                 s.line = new WebglThickLine(s.color, points, s.width);
+                s.line.lineSpaceX(-1, 2 / s.line.numPoints);
+                //console.log(s,s.line);
             }
-            else s.line = new WebglLine(s.color, points);
-
-            s.line.arrangeX();
+            else {
+                s.line = new WebglLine(s.color, points);
+                s.line.arrangeX();
+            }
 
             //console.log(JSON.stringify(s.values));
             if(s.values?.length === s.points) {
-                if(!('ymax' in s)) {
-                    let max = Math.max(...s.values);
-                    let min = Math.min(...s.values);
-                    s.ymin = min;
-                    s.ymax = max;
-                } else if(!('ymin' in s)) {
-                    if(s.ymax < 0) {
-                        s.ymin = s.ymax*2;
-                    }
-                    else s.ymin = 0;
-                }
-                let abs = Math.abs(s.ymin);
-                s.absmax = abs > s.ymax ? abs : s.ymax;
-
-
                 if(s.values.length !== points) {
                     if(s.interpolate) {
                         if(s.values.length > points) {
@@ -220,23 +221,90 @@ export class WebglLinePlotUtil {
                 }
             } else if(Array.isArray(s.values)) s.values = [...new Array(points-s.values.length).fill(0),...s.values];
             else s.values = new Array(s.points).fill(0);
-            if(isNaN(s.ymax)) { s.ymax = s.values[0] === 0 ? 1 : s.values[0];  }
-            if(isNaN(s.ymin)) { s.ymin = s.ymax < 0 ? s.ymax : 0; }
             //console.log('before',JSON.stringify(s.values));
 
+            if(isNaN(s.ymax)) { 
+                if(!isNaN(s.ymin)) s.ymax = s.values.length <= 100000 ? Math.max(...s.values) : 1;
+                else s.ymax = 0; 
+            }
+            if(isNaN(s.ymin)) {
+                if(!isNaN(s.ymax)) s.ymin = s.values.length <= 100000 ? Math.min(...s.values) : 1;
+                s.ymin = 0; 
+            }
+
+            let min = s.ymin;
+            let max = s.ymax;
+            if(min === max) {
+                max = s.values.length <= 100000 ? Math.max(...s.values) : 1;
+                min = s.values.length <= 100000 ? Math.min(...s.values) : 0;
+                s.ymax = max;
+                s.ymin = min;
+            } 
+            else if(!(typeof (info.initial.lines[line] as any)?.ymin === 'number') && 
+                (settings.overlay || s.autoscale)
+            ) { 
+                max = s.values.length <= 100000 ? Math.max(...s.values,s.ymax) : 1;
+                min = s.values.length <= 100000 ? Math.min(...s.values,s.ymin) : 0;
+                s.ymin = min;
+                s.ymax = max;
+                let abs = Math.abs(s.ymin);
+                s.absmax = abs > s.ymax ? abs : s.ymax;
+            } else if(typeof s.ymax === 'number') {
+                if(typeof s.ymin !== 'number') {
+                    s.ymin = 0;
+                }
+                if(s.ymin > s.ymax) {
+                    max = s.ymin;
+                    s.ymin = s.ymax;
+                    s.ymax = max; //swap
+                }
+            } 
+            if(typeof min !== 'number') 
+                min = s.values.length <= 100000 ? Math.min(...s.values,s.ymin) : 0;
+            if(typeof max !== 'number') 
+                max = s.values.length <= 100000 ? Math.max(...s.values,s.ymax) : 1;
+
+            let abs = Math.abs(s.ymin);
+            s.absmax = abs > s.ymax ? abs : s.ymax;
+
+
             if(!('autoscale' in s)) s.autoscale = true; 
-            if(s.points > 5000) s.autoscale = false; //limit call stack
+            //if(s.points > 5000) s.autoscale = false; //limit call stack
             if(!s.position) s.position = settings.nLines - i - 1;
             if(s.autoscale) {
                 if(!('clamp' in s)) s.clamp = true;
-                s.scaled = WebglLinePlotUtil.autoscale(s.values, s.position ? s.position : i, nLines, s.centerZero, s.ymin, s.ymax, s.clamp);
+                if(s.autoscale === 2) s.scaled = WebglLinePlotUtil.autoscale(
+                    s.values, 
+                    s.position, 
+                    nLines, 
+                    s.centerZero, 
+                    min, 
+                    max, 
+                    s.clamp
+                );
+                else { //let WebglPlot modify uniforms instead (way faster);
+                    s.scaled = s.values;
+                    s.line.offsetY = WebglLinePlotUtil.getYOffset(
+                        s.position, 
+                        nLines
+                    );
+                    s.line.scaleY = WebglLinePlotUtil.getYScalar(
+                        s.values,
+                        nLines,
+                        s.centerZero,
+                        min, 
+                        max
+                    );
+                }
             } else s.scaled = s.values;
 
             //console.log('after',JSON.stringify(s.values));
 
             s.scaled.forEach((y,i) => s.line.setY(i,y));
 
-            plot.addDataLine(s.line);
+            if(s.line instanceof WebglThickLine) plot.addThickLine(s.line)
+            else if (s.line instanceof WebglLine) plot.addDataLine(s.line);
+            //addSurface
 
             if(!('xAxis' in s)) s.xAxis = true; 
 
@@ -247,9 +315,8 @@ export class WebglLinePlotUtil {
                 } else s.xColor = new ColorRGBA(1,1,1,0.3);
 
                 let x = new WebglLine(s.xColor,2);
-                let xHeight = (i+1)*2/nLines-1-1/nLines;
-                if(s.autoscale) x.constY(xHeight);
-                else x.constY(0.5); //just use center line
+                let xHeight = s.autoscale ? (i+1)*2/nLines-1-1/nLines : 0;
+                x.constY(xHeight);
                 x.arrangeX();
                 x.xy[2] = 1;
 
@@ -263,7 +330,7 @@ export class WebglLinePlotUtil {
                     if(Array.isArray(settings.dividerColor)) settings.dividerColor = new ColorRGBA(...settings.dividerColor as [number,number,number,number]);
                 } else settings.dividerColor = new ColorRGBA(1,1,1,1);
                 let divider = new WebglLine(settings.dividerColor,2);
-                divider.constY((i+1)*2/nLines - 1);
+                divider.constY(s.autoscale ? (i+1)*2/nLines - 1 : 1);
                 divider.arrangeX();
                 divider.xy[2] = 1;
 
@@ -272,24 +339,16 @@ export class WebglLinePlotUtil {
                 plot.addAuxLine(divider);
             }
             
-            i++;
-        }
-
-        if(typeof settings.overlay === 'object') {
-            let canvas = settings.overlay;
-            let ctx = settings.overlayCtx as CanvasRenderingContext2D;
-            ctx.clearRect(0,0,settings.overlay.width,settings.overlay.height);
-            ctx.font = '1em Courier';
-            ctx.fillStyle = 'white';
-            for(const line in settings.lines) {
-                let s = settings.lines[line] as WebglLineProps;
+            if(typeof settings.overlay === 'object') {
                 if(s.useOverlay || !('useOverlay' in s)) {
                     let pos = settings.nLines - s.position - 1;
                     ctx.fillText(line, 20,canvas.height*(pos as number + 0.1)/settings.nLines);
-                    ctx.fillText(`${Math.floor(s.ymax) === s.ymax ? s.ymax : s.ymax?.toFixed(5)} ${s.units ? s.units : ''}`, canvas.width - 70,canvas.height*(pos as number + 0.1)/settings.nLines);
-                    ctx.fillText(`${Math.floor(s.ymin) === s.ymin ? s.ymin : s.ymin?.toFixed(5)} ${s.units ? s.units : ''}`, canvas.width - 70,canvas.height*(pos as number + 0.9)/settings.nLines);
+                    ctx.fillText(`${Math.floor(max) === max ? max : max?.toFixed(5)} ${s.units ? s.units : ''}`, canvas.width - 70,canvas.height*(pos as number + 0.1)/settings.nLines);
+                    ctx.fillText(`${Math.floor(min) === min ? min : min?.toFixed(5)} ${s.units ? s.units : ''}`, canvas.width - 70,canvas.height*(pos as number + 0.9)/settings.nLines);
                 }
             }
+            
+            i++;
         }
 
         //console.log(plot, this.plots[settings._id])
@@ -360,6 +419,17 @@ export class WebglLinePlotUtil {
         if(!plotInfo) return false;
         if(lines) {
             let regenerate = false;
+
+            let canvas;
+            let ctx;
+            if(typeof plotInfo.settings.overlay === 'object') {
+                canvas = plotInfo.settings.overlay;
+                ctx = plotInfo.settings.overlayCtx as CanvasRenderingContext2D;
+                ctx.clearRect(0,0,plotInfo.settings.overlay.width,plotInfo.settings.overlay.height);
+                ctx.font = '1em Courier';
+                ctx.fillStyle = plotInfo.settings.overlayColor ? plotInfo.settings.overlayColor : 'white';
+            }
+
             for(const line in lines) {
                 if(
                     plotInfo.settings.lines[line] && 
@@ -381,14 +451,26 @@ export class WebglLinePlotUtil {
                     }
 
                     if(s.values) {
-                        if(isNaN(s.ymax)) { s.ymax = s.values[0] === 0 ? 1 : s.values[0];  }
-                        if(isNaN(s.ymin)) { s.ymin = s.ymax < 0 ? s.ymax : 0; }
+                        if(isNaN(s.ymax)) { 
+                            if(!isNaN(s.ymin)) s.ymax = s.values.length <= 100000 ? Math.max(...s.values) : 1;
+                            else s.ymax = 0; 
+                        }
+                        if(isNaN(s.ymin)) {
+                            if(!isNaN(s.ymax)) s.ymin = s.values.length <= 100000 ? Math.min(...s.values) : 1;
+                            s.ymin = 0; 
+                        }
 
-                        if(!(typeof (plotInfo.initial.lines[line] as any)?.ymin === 'number') && 
+                        let min = s.ymin;
+                        let max = s.ymax;
+                        if(min === max) {
+                            max = s.values.length <= 100000 ? Math.max(...s.values) : 1;
+                            min = s.values.length <= 100000 ? Math.min(...s.values) : 0;
+                        } 
+                        else if(!(typeof (plotInfo.initial.lines[line] as any)?.ymin === 'number') && 
                             (plotInfo.settings.overlay || s.autoscale)
                         ) { 
-                            let max = Math.max(...s.values, s.ymax);
-                            let min = Math.min(...s.values, s.ymin);
+                            max = s.values.length <= 100000 ? Math.max(...s.values,s.ymax) : 1;
+                            min = s.values.length <= 100000 ? Math.min(...s.values,s.ymin) : 0;
                             s.ymin = min;
                             s.ymax = max;
                             let abs = Math.abs(s.ymin);
@@ -398,22 +480,38 @@ export class WebglLinePlotUtil {
                                 s.ymin = 0;
                             }
                             if(s.ymin > s.ymax) {
-                                let max = s.ymin;
+                                max = s.ymin;
                                 s.ymin = s.ymax;
                                 s.ymax = max; //swap
                             }
                         } 
+                        if(typeof min !== 'number') min = s.values.length <= 100000 ? Math.min(...s.values,s.ymin) : 0;
+                        if(typeof max !== 'number') max = s.values.length <= 100000 ? Math.max(...s.values,s.ymax) : 1;
 
                         if(s.autoscale) {
-                            s.scaled = WebglLinePlotUtil.autoscale(
+                            if(s.autoscale === 2) s.scaled = WebglLinePlotUtil.autoscale(
                                 s.values, 
                                 s.position, 
                                 plotInfo.settings.nLines, 
                                 s.centerZero, 
-                                s.ymin, 
-                                s.ymax,
+                                min, 
+                                max,
                                 s.clamp
                             );
+                            else { //let WebglPlot modify uniforms instead (way faster);
+                                s.scaled = s.values;
+                                s.line.offsetY = WebglLinePlotUtil.getYOffset(
+                                    s.position, 
+                                    plotInfo.settings.nLines
+                                );
+                                s.line.scaleY = WebglLinePlotUtil.getYScalar(
+                                    s.values,
+                                    plotInfo.settings.nLines,
+                                    s.centerZero,
+                                    min,
+                                    max
+                                );
+                            }
                         } else s.scaled = s.values;
                         if(s.scaled.length !== s.points) {
                             if(s.interpolate) {
@@ -436,6 +534,15 @@ export class WebglLinePlotUtil {
                             }
                             else s.line.setY(i,y)
                         });
+
+                        if(typeof plotInfo.settings.overlay === 'object') {
+                            if(s.useOverlay || !('useOverlay' in s)) {
+                                let pos = plotInfo.settings.nLines - s.position - 1;
+                                ctx.fillText(line, 20,canvas.height*(pos as number + 0.1)/plotInfo.settings.nLines);
+                                ctx.fillText(`${Math.floor(max) === max ? max : max?.toFixed(5)} ${s.units ? s.units : ''}`, canvas.width - 70,canvas.height*(pos as number + 0.1)/plotInfo.settings.nLines);
+                                ctx.fillText(`${Math.floor(min) === min ? min : min?.toFixed(5)} ${s.units ? s.units : ''}`, canvas.width - 70,canvas.height*(pos as number + 0.9)/plotInfo.settings.nLines);
+                            }
+                        }
                     }
                 }
                 else if(plotInfo.settings.generateNewLines && !line.includes('timestamp')) { //we'll ignore timestamps since we often pass multiple competing objects in
@@ -526,8 +633,8 @@ export class WebglLinePlotUtil {
         clamp?:boolean //clamp values to within their line segment (that is, no overlapping other lines)
     ) {
         if(array?.length === 0 ) return array;
-        let max = ymax ? ymax : Math.max(...array);
-        let min = ymin ? ymin : Math.min(...array);
+        let max = (typeof ymax === 'number') ? ymax : (array.length <= 100000 ? Math.max(...array) : 1);
+        let min = (typeof ymin === 'number') ? ymin : (array.length <= 100000 ? Math.min(...array) : 0);
 
         //console.log(max,min)
 
@@ -561,6 +668,47 @@ export class WebglLinePlotUtil {
                 return (2*((y-min)*scalar-(1/(2*nLines)))+(_lines*(lineIdx+1)*2-1-_lines))
             }); //scaled array
         }
+    }
+
+    static getYScalar(
+        array, 
+        nLines=1, 
+        centerZero=false, 
+        ymin?:number,
+        ymax?:number
+    ) {
+        if(array?.length === 0 ) return array;
+        let max = (typeof ymax === 'number') ? ymax : (array.length <= 100000 ? Math.max(...array) : 1);
+        let min = (typeof ymin === 'number') ? ymin : (array.length <= 100000 ? Math.min(...array) : 0);
+
+        //console.log(max,min)
+
+        let _lines = 1/nLines;
+        let scalar = 1;
+        if(centerZero) {
+            let absmax = Math.max(Math.abs(min),Math.abs(max));
+            if(absmax !== 0) scalar = _lines/absmax;
+            return 2*scalar; //still need to shift the x and y
+        }
+        else {
+            if(max === min) {
+                if(max !== 0) {
+                    scalar = _lines/max;
+                } else if (min !== 0) {
+                    scalar = _lines/Math.abs(min);
+                }
+            }
+            else scalar = _lines/(max-min);
+            return 2*scalar;
+        }
+    }
+
+    static getYOffset(
+        lineIdx=0, 
+        nLines=1
+    ) {
+        let _lines = 1/nLines;
+        return _lines*(lineIdx+1)*2-1-_lines;
     }
 
 

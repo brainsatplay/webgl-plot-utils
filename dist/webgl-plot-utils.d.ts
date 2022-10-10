@@ -17,10 +17,10 @@ export declare type WebglLineProps = {
     viewing?: boolean;
     [key: string]: any;
 } & ({
-    nPoints: number;
+    nPoints?: number;
 } | {
-    nSec: number;
-    sps: number;
+    nSec?: number;
+    sps?: number;
 });
 export declare type WebglLinePlotProps = {
     canvas: HTMLCanvasElement;
@@ -35,6 +35,8 @@ export declare type WebglLinePlotProps = {
         debug?: boolean;
     };
     overlay?: HTMLCanvasElement | boolean;
+    overlayColor?: string;
+    overlayFont?: string;
     lines: {
         [key: string]: WebglLineProps | number[];
     };
@@ -65,6 +67,8 @@ export declare class WebglLinePlotUtil {
     }, draw?: boolean): boolean;
     updateLine(line: WebglLine | WebglThickLine, values: number[], interpolate?: boolean, autoscale?: boolean, autoscalePosition?: number, nLines?: number, centerZero?: boolean): boolean;
     static autoscale(array: any, lineIdx?: number, nLines?: number, centerZero?: boolean, ymin?: number, ymax?: number, clamp?: boolean): any;
+    static getYScalar(array: any, nLines?: number, centerZero?: boolean, ymin?: number, ymax?: number): any;
+    static getYOffset(lineIdx?: number, nLines?: number): number;
     static absmax(array: any): number;
     static downsample(array: any, fitCount: any, scalar?: number): any;
     static upsample(array: any, fitCount: any, scalar?: number): any[];

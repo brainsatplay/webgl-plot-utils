@@ -1,9 +1,11 @@
 # webgl-plot-utils
 
 A quality of life wrapper for webgl-plot library. For creating simple, stacked real time plots.
-Incl thicc (triangle strip) lines, autoscaling for stacking, auto-interpolation or auto-slicing, text overlay support.
+Incl thicc (triangle strip) lines, autoscaling for stacking, auto-interpolation or auto-slicing, text overlay support. If you don't specify the min and max yourself they will be calculated dynamically for up to 100K samples on line init, after that things start to overflow. 
 
-13kb dist
+You can render millions of samples in real time. You can push partial buffers as well and the values will circularly buffer for you, but it's best to manage the WebglLine arrays manually if you need TONS of samples to render in real time. This library otherwise is convenient for animating and autoscaling tens of thousands of samples in real time.
+
+~13kb dist
 
 ![Capture](./Capture.PNG)
 
@@ -50,6 +52,8 @@ type WebglLinePlotProps = {
         debug?:boolean
     },
     overlay?:HTMLCanvasElement|boolean, //automatically print the max and min values of the stacked lines
+    overlayColor?:string, //overlay canvas fillStyle string
+    overlayFont?:string,  //overlay canvas font string
     lines:{
         [key:string]:WebglLineProps|number[]
     },
