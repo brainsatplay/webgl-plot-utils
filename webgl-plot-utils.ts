@@ -536,7 +536,7 @@ export class WebglLinePlotUtil {
                     if(Array.isArray(lines[line])) {
                         lines[line] = {values: lines[line] as number[]};
                     }
-                    if(!(lines[line] as any).nSec && !(lines[line] as any).nPoints) {
+                    if(!(lines[line] as any).nSec && !(lines[line] as any).nPoints && !plotInfo.settings.linePoints) {
                         (lines[line] as any).nPoints = 1000;
                     }
                     regenerate = true;
