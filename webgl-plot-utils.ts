@@ -191,8 +191,7 @@ export class WebglLinePlotUtil {
             } else if(s.points) {
                 points = s.points; 
             } else if (settings.linePoints) {
-                points = settings.linePoints
-                s.points = points;
+                points = settings.linePoints;
             }
             else if(s.values) points=s.values.length;
             else points = 1000;
