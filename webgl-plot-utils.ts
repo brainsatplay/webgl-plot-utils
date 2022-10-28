@@ -190,11 +190,10 @@ export class WebglLinePlotUtil {
                 points = s.nPoints; 
             } else if(s.points) {
                 points = s.points; 
-            } else if(s.values) points=s.values.length;
-            else if(!points && settings.linePoints) points = settings.linePoints;
-            else if(!points) points = 1000;
+            } else if (settings.linePoints) points = settings.linePoints
+            else if(s.values) points=s.values.length;
+            else points = 1000;
 
-            if(!points) return;
             s.points = points;
 
             if((settings.lines[line] as WebglLineProps).viewing === false) {
@@ -202,6 +201,9 @@ export class WebglLinePlotUtil {
             }
 
             if((s.width || settings.lineWidth) && s.width !== 0) {
+                let width = settings.lineWidth; 
+                if(!width) width = s.width;
+                
                 if(s.width) s.line = new WebglThickLine(s.color, points, s.width);
                 else if (settings.lineWidth) s.line = new WebglThickLine(s.color, points, settings.lineWidth);
                 s.line.lineSpaceX(-1, 2 / s.line.numPoints);
@@ -427,16 +429,18 @@ export class WebglLinePlotUtil {
                     
                     let s = plotInfo.settings.lines[line] as any;
                     
-                    if(Array.isArray(lines[line])) {
-                        WebglLinePlotUtil.circularBuffer(s.values,lines[line] as number[])
+                    if(Array.isArray(lines[line]) && s.values.length < 100000) {
+                        if(lines[line].length === s.values.length) s.values = lines[line];
+                        else WebglLinePlotUtil.circularBuffer(s.values,lines[line] as number[])
                         //console.log(lines[line],s.values)
                     }
                     else if (typeof lines[line] === 'number') {
                         s.values.push(lines[line]);
                         s.values.shift();
                     } else if(lines[line]?.values) {
-                        WebglLinePlotUtil.circularBuffer(s.values, lines[line].values as number[])
-                    }
+                        if(lines[line].values.length === s.values.length) s.values = lines[line].values;
+                        else WebglLinePlotUtil.circularBuffer(s.values, lines[line].values as number[])
+                    } 
 
                     if(s.values) {
 
