@@ -21,6 +21,8 @@ export declare type WebglLineProps = {
 } | {
     nSec?: number;
     sps?: number;
+} | {
+    points?: number;
 });
 export declare type WebglLinePlotProps = {
     canvas: HTMLCanvasElement;
@@ -37,6 +39,8 @@ export declare type WebglLinePlotProps = {
     overlay?: HTMLCanvasElement | boolean;
     overlayColor?: string;
     overlayFont?: string;
+    lineWidth?: number;
+    linePoints?: number;
     lines: {
         [key: string]: WebglLineProps | number[];
     };

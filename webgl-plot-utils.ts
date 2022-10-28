@@ -11,7 +11,6 @@ export type WebglLineProps = {
     scaled?:number[], //rescaled values (same as values if autoscale is false)
     ymin?:number, //min y to scale based on? sets bottom of line visible
     ymax?:number, //max y to scale based on? sets top of line visible
- 
     centerZero?:boolean, //center the line at zero (if autoscaling), i.e. the positive and negative axis get the same amount of space, default false
     xAxis?:boolean, //draw an xaxis, default true
     xColor?:[number,number,number,number]|ColorRGBA, //default gray and transparent
@@ -26,6 +25,8 @@ export type WebglLineProps = {
     }|{ //or define by number of seconds + samplerate
         nSec?:number, 
         sps?:number
+    }|{
+        points?:number
     })
 
 export type WebglLinePlotProps = {
@@ -43,6 +44,8 @@ export type WebglLinePlotProps = {
     overlay?:HTMLCanvasElement|boolean, //automatically print the max and min values of the stacked lines
     overlayColor?:string, //overlay canvas fillStyle string
     overlayFont?:string,  //overlay canvas font string
+    lineWidth?:number, //can specify the width of all lines by default (every line will be thick)
+    linePoints?:number, //can specify default number of points on lines
     lines:{
         [key:string]:WebglLineProps|number[]
     },
@@ -185,7 +188,10 @@ export class WebglLinePlotUtil {
                 points = Math.ceil(s.nSec*s.sps);
             } else if(s.nPoints) {
                 points = s.nPoints; 
+            } else if(s.points) {
+                points = s.points; 
             } else if(s.values) points=s.values.length;
+            else if(!points && settings.linePoints) points = settings.linePoints;
             else if(!points) points = 1000;
 
             if(!points) return;
@@ -195,8 +201,9 @@ export class WebglLinePlotUtil {
                 continue; //skip rest
             }
 
-            if(s.width) {
-                s.line = new WebglThickLine(s.color, points, s.width);
+            if((s.width || settings.lineWidth) && s.width !== 0) {
+                if(s.width) s.line = new WebglThickLine(s.color, points, s.width);
+                else if (settings.lineWidth) s.line = new WebglThickLine(s.color, points, settings.lineWidth);
                 s.line.lineSpaceX(-1, 2 / s.line.numPoints);
                 //console.log(s,s.line);
             }

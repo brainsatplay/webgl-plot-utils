@@ -12,37 +12,12 @@ You can render millions of samples in real time. You can push partial buffers as
 
 ```ts
 
-type WebglLineProps = {
-    values?:number[],
-    color?:[number,number,number,number]|ColorRGBA,  
-
-    position?:number, //stack position? default is the order you define the lines in this object or you can have them overlap
-    autoscale?:boolean|2, //autoscale the data to -1 and 1 and stack, default true so you can just pass whatever, setting 2 allows for clamping but is slower (CPU based)
-    scaled?:number[], //rescaled values (same as values if autoscale is false)
-    ymin?:number, //min y to scale based on? sets bottom of line visible
-    ymax?:number, //max y to scale based on? sets top of line visible
-
-    centerZero?:boolean, //center the line at zero (if autoscaling), i.e. the positive and negative axis get the same amount of space, default false
-    xAxis?:boolean, //draw an xaxis, default true
-    xColor?:[number,number,number,number]|ColorRGBA, //default gray and transparent
-    width?:number, //use thick triangle strip lines instead, 6x slower!!
-    interpolate?:boolean, //we can up or downsample data provided to update arrays, else we will use the end of the array for the slice (assuming you're pushing to an array and visualizing the incoming data)
-    useOverlay?:boolean, //specify if you want this line to print, set false for overlapping lines to prevent printing on top of each other (for now)
-    units?:string, //units to appear on overlay
-    viewing?:boolean, //are we rendering this line? reinit every time you want to change this setting
-    [key:string]:any
-} & (
-    { //define a fixed number of points
-        nPoints:number
-    }|{ //or define by number of seconds + samplerate
-        nSec:number, 
-        sps:number
-    })
-
 type WebglLinePlotProps = {
     canvas:HTMLCanvasElement,
     width?:number,
     height?:number,
+    lineWidth?:number, //can specify the width of all lines by default
+    linePoints?:number, //can specify default number of points on lines
     webglOptions?:{
         antialias?:boolean,
         transparent?:boolean,
@@ -62,6 +37,34 @@ type WebglLinePlotProps = {
     cleanGeneration?:boolean, //on regeneration, remove any lines not in the current update?
     [key:string]:any
 }
+
+type WebglLineProps = {
+    values?:number[]
+    color?:[number,number,number,number]|ColorRGBA,  
+
+    position?:number, //stack position? default is the order you define the lines in this object or you can have them overlap
+    autoscale?:boolean|2, //autoscale the data to -1 and 1 and stack, default true so you can just pass whatever, setting 2 allows for clamping but is slower (CPU based)
+    scaled?:number[], //rescaled values (same as values if autoscale is false)
+    ymin?:number, //min y to scale based on? sets bottom of line visible
+    ymax?:number, //max y to scale based on? sets top of line visible
+    centerZero?:boolean, //center the line at zero (if autoscaling), i.e. the positive and negative axis get the same amount of space, default false
+    xAxis?:boolean, //draw an xaxis, default true
+    xColor?:[number,number,number,number]|ColorRGBA, //default gray and transparent
+    width?:number, //use thick triangle strip lines instead, 6x slower!!
+    interpolate?:boolean, //we can up or downsample data provided to update arrays, else we will use the end of the array for the slice (assuming you're pushing to an array and visualizing the incoming data)
+    useOverlay?:boolean, //specify if you want this line to print, set false for overlapping lines to prevent printing on top of each other (for now)
+    units?:string, //units to appear on overlay
+    viewing?:boolean, //are we rendering this line? reinit every time you want to change this setting
+    [key:string]:any
+} & ({ //define a fixed number of points
+        nPoints?:number
+    }|{ //or define by number of seconds + samplerate
+        nSec?:number, 
+        sps?:number
+    }|{
+        points?:number
+    })
+
 
 //returned from initPlot, you can reinit at any time by modifying the settings and passi
 type WebglLinePlotInfo = {
