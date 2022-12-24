@@ -230,7 +230,10 @@ export class WebglLinePlotUtil {
                         else s.values = [...new Array(s.points-s.values.length).fill(0), ...s.values];
                     }
                 }
-            } else if(Array.isArray(s.values)) s.values = [...new Array(points-s.values.length).fill(0),...s.values];
+            } else if(Array.isArray(s.values)) {
+                if(s.values.length > points) s.values = s.values.slice(s.values.length-points);
+                else if(s.values.length < points) s.values = [...new Array(points-s.values.length).fill(0),...s.values];
+            }
             else s.values = new Array(s.points).fill(0);
             //console.log('before',JSON.stringify(s.values));
 
@@ -432,6 +435,7 @@ export class WebglLinePlotUtil {
                     let s = plotInfo.settings.lines[line] as any;
                     
                     if(Array.isArray(lines[line]) && s.values.length < 100000) {
+                        if(s.values.length === 0) s.values.length = s.points ? s.points : 1000;
                         if(lines[line].length === s.values.length) s.values = lines[line];
                         else WebglLinePlotUtil.circularBuffer(s.values,lines[line] as number[])
                         //console.log(lines[line],s.values)
@@ -440,12 +444,14 @@ export class WebglLinePlotUtil {
                         s.values.push(lines[line]);
                         s.values.shift();
                     } else if(lines[line]?.values) {
+                        if(s.values.length === 0) s.values.length = s.points ? s.points : 1000;
                         if(lines[line].values.length === s.values.length) s.values = lines[line].values;
-                        else WebglLinePlotUtil.circularBuffer(s.values, lines[line].values as number[])
+                        else {
+                            WebglLinePlotUtil.circularBuffer(s.values, lines[line].values as number[])
+                        }
                     } 
 
                     if(s.values) {
-
                         if(s.values.length !== s.points) {
                             if(s.interpolate) {
                                 if(s.values.length > s.points) {
@@ -463,6 +469,7 @@ export class WebglLinePlotUtil {
 
                         let min = s.ymin;
                         let max = s.ymax;
+
                         if(min === max) {
                             max = s.values.length <= 100000 ? Math.max(...s.values) : 1;
                             min = s.values.length <= 100000 ? Math.min(...s.values) : 0;
@@ -794,7 +801,7 @@ export class WebglLinePlotUtil {
             arr.splice(
                 0,
                 len,
-                newEntries.slice(len-newEntries.length)
+                ...newEntries.slice(newEntries.length - len)
             );
         }
         else { 
