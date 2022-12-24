@@ -115,6 +115,8 @@ export class WebglLinePlotUtil {
 
         if(settings.lines?.timestamp) delete settings.lines.timestamp;
 
+        if(!settings.lines) settings.lines = {};
+
         let initialLns = {};
         for(const key in settings.lines) {
             initialLns[key] = Object.assign({},initialLns[key])
