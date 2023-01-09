@@ -691,7 +691,8 @@ export class WebglLinePlotUtil {
         let _lines = 1/nLines;
         let offset = _lines*(lineIdx+1)*2-1-_lines;
         
-        if(min > 0) offset -= min*scalar + 1/nLines;
+        if(min !== 0) offset -= min*scalar + 1/nLines;
+        else offset -= scalar + 1/nLines;
         
         return offset;
     }   
