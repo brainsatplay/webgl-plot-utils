@@ -568,6 +568,7 @@ export class WebglLinePlotUtil {
                                     ctx.lineTo(x, boxBot);
                                     ctx.stroke();
                                 }
+                                ctx.fillStyle = plotInfo.settings.overlayColor ? plotInfo.settings.overlayColor : 'white';
                                 ctx.fillText(
                                     line, 
                                     20,canvas.height*(pos as number + 0.2)/plotInfo.settings.nLines
