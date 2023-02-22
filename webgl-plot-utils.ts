@@ -566,6 +566,7 @@ export class WebglLinePlotUtil {
                                     let x = canvas.width*s.ct/s.values.length;
                                     ctx.moveTo(x, boxTop);
                                     ctx.lineTo(x, boxBot);
+                                    ctx.stroke();
                                 }
                                 ctx.fillText(
                                     line, 
