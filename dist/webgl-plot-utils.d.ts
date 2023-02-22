@@ -1,5 +1,5 @@
 import { WebglLine, WebglThickLine, WebglPlot, ColorRGBA } from 'webgl-plot';
-export declare type WebglLineProps = {
+export type WebglLineProps = {
     values?: number[];
     color?: [number, number, number, number] | ColorRGBA;
     position?: number;
@@ -24,7 +24,7 @@ export declare type WebglLineProps = {
 } | {
     points?: number;
 });
-export declare type WebglLinePlotProps = {
+export type WebglLinePlotProps = {
     canvas: HTMLCanvasElement;
     width?: number;
     height?: number;
@@ -36,6 +36,8 @@ export declare type WebglLinePlotProps = {
         preserveDrawing?: boolean;
         debug?: boolean;
     };
+    mode?: 'scroll' | 'sweep';
+    sweepColor?: string;
     overlay?: HTMLCanvasElement | boolean;
     overlayColor?: string;
     overlayFont?: string;
@@ -49,7 +51,7 @@ export declare type WebglLinePlotProps = {
     cleanGeneration?: boolean;
     [key: string]: any;
 };
-export declare type WebglLinePlotInfo = {
+export type WebglLinePlotInfo = {
     plot: WebglPlot;
     settings: WebglLinePlotProps;
     initial: WebglLinePlotProps;
