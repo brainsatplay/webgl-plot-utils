@@ -26,7 +26,7 @@ type WebglLinePlotProps = {
         preserveDrawing?:boolean,
         debug?:boolean
     },
-    mode?:'sweep'|'scroll', //defaults to scrolling
+    mode?:'sweep'|'scroll', //defaults to scrolling, sweep is more like a hospital monitor.
     sweepColor?:string, //sweep line fillStyle
     overlay?:HTMLCanvasElement|boolean, //automatically print the max and min values of the stacked lines
     overlayColor?:string, //overlay canvas fillStyle string
