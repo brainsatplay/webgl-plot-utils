@@ -443,7 +443,9 @@ export class WebglLinePlotUtil {
                       
                     if(s.values) {
                         if(plotInfo.settings.mode && plotInfo.settings.mode === 'sweep') {
-                            if(!('ct' in s)) s.ct = 0;
+                            if(!('ct' in s)) {
+                                s.ct = 0;
+                            }
                             
                             const stepLine = (value) => {
                                 if(s.ct > s.values.length) 
@@ -453,24 +455,35 @@ export class WebglLinePlotUtil {
                             }
 
                             if(Array.isArray(lines[line])) {
+                                if(s.ct === 0) s.values = new Array(s.values.length).fill(lines[line][lines[line].length - 1]);
                                 lines[line].forEach(stepLine);
                             } else if (typeof lines[line] === 'number') {
+                                if(s.ct === 0) s.values = new Array(s.values.length).fill(lines[line]);
                                 stepLine(lines[line]);
                             } else if (lines[line].values) {
+                                if(s.ct === 0) s.values = new Array(s.values.length).fill(lines[line].values[lines[line].values.length - 1]);
                                 (lines[line].values as any).forEach(stepLine);
                             }
                         }
                         else if(Array.isArray(lines[line]) && s.values?.length < 100000) {
-                            if(s.values.length === 0) s.values.length = s.points ? s.points : 1000;
-                            if(lines[line].length === s.values.length) s.values = lines[line];
+                            if(s.values.length === 0) {
+                                s.values.length = s.points ? s.points : 1000;
+                                s.values.fill(lines[line][lines[line].length-1]);
+                            }
+                            if(lines[line].length === s.values.length) {s.values = lines[line];}
                             else WebglLinePlotUtil.circularBuffer(s.values,lines[line] as number[])
                             //console.log(lines[line],s.values)
                         }
                         else if (typeof lines[line] === 'number') {
+                            if(s.values[0] === undefined || s.values[0] === 0) 
+                                s.values.fill(lines[line]);
                             s.values.push(lines[line]);
                             s.values.shift();
                         } else if(lines[line]?.values) {
-                            if(s.values.length === 0) s.values.length = s.points ? s.points : 1000;
+                            if(s.values.length === 0) {
+                                s.values.length = s.points ? s.points : 1000;
+                                s.values.fill(lines[line].values[lines[line].values.length-1]);
+                            }
                             if(lines[line].values.length === s.values.length) s.values = lines[line].values;
                             else {
                                 WebglLinePlotUtil.circularBuffer(s.values, lines[line].values as number[])
@@ -561,7 +574,7 @@ export class WebglLinePlotUtil {
                                     boxBot
                                 );
                                 if(plotInfo.settings.mode && plotInfo.settings.mode === 'sweep') {
-                                    ctx.fillStyle = plotInfo.settings.sweepColor ? plotInfo.settings.sweepColor : 'rgba(0,255,0,0.25)';
+                                    ctx.fillStyle = plotInfo.settings.sweepColor ? plotInfo.settings.sweepColor : 'rgba(0,255,0,0.8)';
                                     ctx.beginPath();
                                     let x = canvas.width*s.ct/s.values.length;
                                     ctx.moveTo(x, boxTop);
