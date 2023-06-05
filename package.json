@@ -1,6 +1,6 @@
 {
     "name": "webgl-plot-utils",
-    "version": "0.3.21",
+    "version": "0.3.23",
     "description": "webgl-plot wrapper for quickly making stacked time series.",
     "main": "dist/index.js",
     "module": "dist/index.esm.js",
@@ -9,6 +9,7 @@
       "example": "example"
     },
     "scripts": {
+      "start": "tinybuild",
       "test": "echo \"Error: no test specified\" && exit 1"
     },
     "repository": {
