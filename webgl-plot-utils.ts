@@ -707,6 +707,7 @@ export class WebglLinePlotUtil {
         
         if(hrs > 0) {
             timeStr += hrs + ":";
+            if(minutes < 10) timeStr += '0';
         }
     
         timeStr += minutes + ":";
