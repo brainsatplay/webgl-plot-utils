@@ -408,6 +408,60 @@ export class WebglLinePlotUtil {
         } return undefined;
     }
 
+    renderOverlay = (canvas, ctx, plotInfo:WebglLinePlotInfo, s, lineName, max=1, min=0) => {
+        if(typeof plotInfo.settings.overlay === 'object') {
+            if(s.useOverlay || !('useOverlay' in s)) {
+                let pos = plotInfo.settings.nLines - s.position - 1;
+                let boxTop = canvas.height*pos/plotInfo.settings.nLines;
+                let boxBot = canvas.height*(pos+1)/plotInfo.settings.nLines;
+                ctx.clearRect(
+                    0,
+                    boxTop,
+                    canvas.width,
+                    boxBot
+                );
+                if(plotInfo.settings.mode === 'sweep') {
+                    ctx.strokeStyle = plotInfo.settings.sweepColor ? plotInfo.settings.sweepColor : 'rgba(0,255,0,0.8)';
+                    ctx.beginPath();
+                    let x = canvas.width*s.ct/s.values.length;
+                    ctx.moveTo(x, boxTop);
+                    ctx.lineTo(x, boxBot);
+                    ctx.stroke();
+                }
+                ctx.fillStyle = plotInfo.settings.overlayColor ? plotInfo.settings.overlayColor : 'white';
+                if(lineName) ctx.fillText(
+                    lineName, 
+                    20,canvas.height*(pos as number + 0.2)/plotInfo.settings.nLines
+                );
+                if(s.nSec) { //render time for x axis
+                    let timeStr = this.formatTime(s.nSec);
+
+                    ctx.fillText(
+                        `${timeStr}`, 
+                        plotInfo.settings.mode === 'sweep' ? canvas.width - 35 : 20,
+                        canvas.height*(pos as number + 0.9)/plotInfo.settings.nLines
+                    );
+                    ctx.fillText(
+                        `0:00`, 
+                        plotInfo.settings.mode === 'sweep' ?  20 : canvas.width - 35,
+                        canvas.height*(pos as number + 0.9)/plotInfo.settings.nLines
+                    );
+                    
+                }
+                if(typeof max === 'number') ctx.fillText(
+                    `${Math.floor(max) === max ? max : max?.toFixed(5)} ${s.units ? s.units : ''}`, 
+                    canvas.width - 100,
+                    canvas.height*(pos as number + 0.2)/plotInfo.settings.nLines
+                );
+                if(typeof min === 'number') ctx.fillText(
+                    `${Math.floor(min) === min ? min : min?.toFixed(5)} ${s.units ? s.units : ''}`, 
+                    canvas.width - 100,
+                    canvas.height*(pos as number + 0.8)/plotInfo.settings.nLines
+                );
+            }
+        }
+    }
+
     //pass the info object and the lines you want to update
     update(
         plotInfo:WebglLinePlotInfo|string, 
@@ -431,49 +485,8 @@ export class WebglLinePlotUtil {
             ctx.fillStyle = plotInfo.settings.overlayColor ? plotInfo.settings.overlayColor : 'white';
         }
 
-            
-        function renderOverlay(plotInfo:WebglLinePlotInfo, s, lineName, max=1, min=0) {
-            if(typeof plotInfo.settings.overlay === 'object') {
-                if(s.useOverlay || !('useOverlay' in s)) {
-                    let pos = plotInfo.settings.nLines - s.position - 1;
-                    let boxTop = canvas.height*pos/plotInfo.settings.nLines;
-                    let boxBot = canvas.height/plotInfo.settings.nLines;
-                    ctx.clearRect(
-                        0,
-                        boxTop,
-                        canvas.width,
-                        boxBot
-                    );
-                    if(plotInfo.settings.mode && plotInfo.settings.mode === 'sweep') {
-                        ctx.fillStyle = plotInfo.settings.sweepColor ? plotInfo.settings.sweepColor : 'rgba(0,255,0,0.8)';
-                        ctx.beginPath();
-                        let x = canvas.width*s.ct/s.values.length;
-                        ctx.moveTo(x, boxTop);
-                        ctx.lineTo(x, boxBot);
-                        ctx.stroke();
-                    }
-                    ctx.fillStyle = plotInfo.settings.overlayColor ? plotInfo.settings.overlayColor : 'white';
-                    if(lineName) ctx.fillText(
-                        lineName, 
-                        20,canvas.height*(pos as number + 0.2)/plotInfo.settings.nLines
-                    );
-                    if(typeof max === 'number') ctx.fillText(
-                        `${Math.floor(max) === max ? max : max?.toFixed(5)} ${s.units ? s.units : ''}`, 
-                        canvas.width - 100,
-                        canvas.height*(pos as number + 0.2)/plotInfo.settings.nLines
-                    );
-                    if(typeof min === 'number') ctx.fillText(
-                        `${Math.floor(min) === min ? min : min?.toFixed(5)} ${s.units ? s.units : ''}`, 
-                        canvas.width - 100,
-                        canvas.height*(pos as number + 0.9)/plotInfo.settings.nLines
-                    );
-                }
-            }
-        }
-
         if(lines) {
             let regenerate = false;
-
 
             for(const line in lines) {
                 if(
@@ -505,7 +518,7 @@ export class WebglLinePlotUtil {
                                 if(s.ct === 0) s.values = new Array(s.values.length).fill(lines[line]); //scale
                                 stepLine(lines[line]);
                             } else if (lines[line].values) {
-                                if(s.ct === 0) s.values = new Array(s.values.length).fill(lines[line].values[lines[line].values.length - 1]); //sca;e
+                                if(s.ct === 0) s.values = new Array(s.values.length).fill(lines[line].values[lines[line].values.length - 1]); //scale
                                 (lines[line].values as any).forEach(stepLine);
                             }
                         }
@@ -616,7 +629,7 @@ export class WebglLinePlotUtil {
                             else s.line.setY(i,y)
                         });
 
-                        renderOverlay(plotInfo as WebglLinePlotInfo, s, line, max, min);
+                        this.renderOverlay(canvas, ctx, plotInfo as WebglLinePlotInfo, s, line, max, min);
                     }
                 }
                 else if(plotInfo.settings.generateNewLines && !line.includes('timestamp')) { //we'll ignore timestamps since we often pass multiple competing objects in
@@ -645,7 +658,7 @@ export class WebglLinePlotUtil {
         } else {
             for( const line in plotInfo.settings.lines) {
                 let s = plotInfo.settings.lines[line] as any;
-                renderOverlay(plotInfo, s, line, s.ymax, s.ymin)
+                this.renderOverlay(canvas, ctx, plotInfo as WebglLinePlotInfo, s, line, s.ymax, s.ymin);
             }
         }
 
@@ -682,6 +695,28 @@ export class WebglLinePlotUtil {
         values.forEach((y,i) => line.setY(i,y));
 
         return true;
+    }
+
+    formatTime(seconds) {
+        let minutes = Math.floor(seconds / 60);
+        let hrs = Math.floor(minutes / 60);
+        minutes = minutes % 60;
+        seconds = seconds % 60;
+        
+        let timeStr = '';
+        
+        if(hrs > 0) {
+            timeStr += hrs + ":";
+        }
+    
+        timeStr += minutes + ":";
+    
+        if(seconds > 0) {
+            if(seconds < 10) timeStr += '0'
+            timeStr += seconds;
+        }
+        
+        return timeStr;
     }
 
     //autoscale array to -1 and 1

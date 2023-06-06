@@ -65,6 +65,7 @@ export declare class WebglLinePlotUtil {
     deinitPlot(info: WebglLinePlotInfo | string): boolean;
     reinitPlot(info: WebglLinePlotInfo | string, settings: WebglLinePlotProps): WebglLinePlotInfo;
     getChartSettings(plotId: string, getValues?: boolean): WebglLinePlotProps;
+    renderOverlay: (canvas: any, ctx: any, plotInfo: WebglLinePlotInfo, s: any, lineName: any, max?: number, min?: number) => void;
     update(plotInfo: WebglLinePlotInfo | string, lines?: {
         [key: string]: WebglLineProps | number[] | {
             [key: string]: any;
@@ -72,6 +73,7 @@ export declare class WebglLinePlotUtil {
         };
     }, draw?: boolean): boolean;
     updateLine(line: WebglLine | WebglThickLine, values: number[], interpolate?: boolean, autoscale?: boolean, autoscalePosition?: number, nLines?: number, centerZero?: boolean): boolean;
+    formatTime(seconds: any): string;
     static autoscale(array: any, lineIdx?: number, nLines?: number, centerZero?: boolean, ymin?: number, ymax?: number, clamp?: boolean): any;
     static getYScalar(array: any, nLines?: number, centerZero?: boolean, ymin?: number, ymax?: number): any;
     static getYOffset(lineIdx?: number, nLines?: number, min?: number, scalar?: number): number;
