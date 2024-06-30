@@ -511,18 +511,18 @@ export class WebglLinePlotUtil {
                                 s.ct++;
                             }
 
-                            if(Array.isArray(lines[line])) {
+                            if(typeof lines[line]?.[0] !== 'undefined') {
                                 if(s.ct === 0) s.values = new Array(s.values.length).fill(lines[line][lines[line].length - 1]); //scale
                                 lines[line].forEach(stepLine);
                             } else if (typeof lines[line] === 'number') {
                                 if(s.ct === 0) s.values = new Array(s.values.length).fill(lines[line]); //scale
                                 stepLine(lines[line]);
-                            } else if (lines[line].values) {
+                            } else if (typeof lines[line]?.values?.[0] !== 'undefined') {
                                 if(s.ct === 0) s.values = new Array(s.values.length).fill(lines[line].values[lines[line].values.length - 1]); //scale
                                 (lines[line].values as any).forEach(stepLine);
                             }
                         }
-                        else if(Array.isArray(lines[line]) && s.values?.length < 100000) {
+                        else if(typeof lines[line]?.[0] !== 'undefined' && s.values?.length < 100000) {
                             if(s.values.length === 0) {
                                 s.values.length = s.points ? s.points : 1000;
                                 s.values.fill(lines[line][lines[line].length-1]);
@@ -633,7 +633,7 @@ export class WebglLinePlotUtil {
                     }
                 }
                 else if(plotInfo.settings.generateNewLines && !line.includes('timestamp')) { //we'll ignore timestamps since we often pass multiple competing objects in
-                    if(Array.isArray(lines[line])) {
+                    if(typeof lines[line]?.[0] !== 'undefined') {
                         lines[line] = {values: lines[line] as number[]};
                     }
                     if(!(lines[line] as any).nSec && !(lines[line] as any).nPoints && !plotInfo.settings.linePoints) {
@@ -940,10 +940,10 @@ export class WebglLinePlotUtil {
         key?:string //if passing a single value
     ) {
         //take incoming data formats and return them in the format that our charting library likes so we can blindly pass stuff in
-        if (Array.isArray(data)) {
-            if(Array.isArray(data[0])) {
+        if (typeof data?.[0] !== 'undefined') {
+            if(typeof data?.[0] !== 'undefined') {
                 let d = {};
-                data.forEach((arr,i) => {
+                (data as any).forEach((arr,i) => {
                     d[i] = arr;
                 });
                 data = d;
